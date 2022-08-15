@@ -7,5 +7,3 @@ Ansible Collection for Red Hat Application Services
 ```shell
 ansible-galaxy collection install redhat_cloud.services
 ```
-
-## Do
