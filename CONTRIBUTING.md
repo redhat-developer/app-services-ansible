@@ -10,17 +10,17 @@ make setup
 
 ## Running code
 
-```
-python plugins/actions/create_kafka.py args.json
+```bash
+python3 plugins/module/create_kafka.py ./tests/create_kafka.json
 ```
 
 where args.json can look like follows:
 
-```
+```json
 {
     "ANSIBLE_MODULE_ARGS": {
         "name": "kafka-name",
         
     }
 }
-```
+
