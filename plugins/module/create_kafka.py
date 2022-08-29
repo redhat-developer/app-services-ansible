@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -54,7 +55,24 @@ message:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+import rhoas_kafka_mgmt_sdk
+from rhoas_kafka_mgmt_sdk.api import default_api
+from rhoas_kafka_mgmt_sdk.model.cloud_provider_list import CloudProviderList
+from rhoas_kafka_mgmt_sdk.model.cloud_region_list import CloudRegionList
+from rhoas_kafka_mgmt_sdk.model.error import Error
+from rhoas_kafka_mgmt_sdk.model.kafka_request import KafkaRequest
+from rhoas_kafka_mgmt_sdk.model.kafka_request_list import KafkaRequestList
+from rhoas_kafka_mgmt_sdk.model.kafka_request_payload import KafkaRequestPayload
+from rhoas_kafka_mgmt_sdk.model.kafka_update_request import KafkaUpdateRequest
+from rhoas_kafka_mgmt_sdk.model.metrics_instant_query_list import MetricsInstantQueryList
+from rhoas_kafka_mgmt_sdk.model.metrics_range_query_list import MetricsRangeQueryList
+from rhoas_kafka_mgmt_sdk.model.supported_kafka_instance_types_list import SupportedKafkaInstanceTypesList
+from rhoas_kafka_mgmt_sdk.model.version_metadata import VersionMetadata
+import util.auth 
 
+configuration = rhoas_kafka_mgmt_sdk.Configuration(
+    host = "https://api.openshift.com"
+)
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -88,17 +106,42 @@ def run_module():
     if module.check_mode:
         module.exit_json(**result)
 
-    # manipulate or modify the state as needed (this is going to be the
-    # part where your module will do what it needs to do)
-    result['message'] =  "created instance" + module.params['name']
+ 
+ 
+    token = util.auth.get_access_token()
+    configuration = rhoas_kafka_mgmt_sdk.Configuration(
+        access_token = token["access_token"]
+    )
+    # Enter a context with an instance of the API client
+    with rhoas_kafka_mgmt_sdk.ApiClient(configuration) as api_client:
+        # Create an instance of the API class
+        api_instance = default_api.DefaultApi(api_client)
+        _async = True # bool | Perform the action in an asynchronous manner
+        kafka_request_payload = KafkaRequestPayload(
+            cloud_provider="cloud_provider_example",
+            name="name_example",
+            region="region_example",
+            reauthentication_enabled=True,
+            plan="plan_example",
+            billing_cloud_account_id="billing_cloud_account_id_example",
+            marketplace="marketplace_example",
+            billing_model="billing_model_example",
+        ) # KafkaRequestPayload | Kafka data
+        try:
+            api_response = api_instance.create_kafka(_async, kafka_request_payload)
+            # manipulate or modify the state as needed (this is going to be the
+            result['object'] = api_response
+            # use whatever logic you need to determine whether or not this module
+            # made any modifications to your target
+            result['changed'] = True
 
-    # use whatever logic you need to determine whether or not this module
-    # made any modifications to your target
-    result['changed'] = True
+            # in the event of a successful module execution, you will want to
+            # simple AnsibleModule.exit_json(), passing the key/value results
+            module.exit_json(**result)
+        except rhoas_kafka_mgmt_sdk.ApiException as e:
+            print("Exception when calling DefaultApi->create_kafka: %s\n" % e)
 
-    # in the event of a successful module execution, you will want to
-    # simple AnsibleModule.exit_json(), passing the key/value results
-    module.exit_json(**result)
+   
 
 
 def main():

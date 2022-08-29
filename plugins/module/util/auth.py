@@ -1,19 +1,17 @@
 from keycloak import KeycloakOpenID
+from os import environ;
 
-# Configure client
-keycloak_openid = KeycloakOpenID(server_url="https://sso.redhat.com/auth/",
-                                 client_id="rhoas-cli-prod",
+def get_access_token():
+    offlineToken = environ.get('OFFLINE_TOKEN')
+    # Configure client
+    keycloak_openid = KeycloakOpenID(server_url="https://sso.redhat.com/auth/",
+                                 client_id="cloud-services",
                                  realm_name="redhat-external")
+    # Refresh token
+    token = keycloak_openid.refresh_token(offlineToken)
+    return token
 
-# Get WellKnow
-config_well_known = keycloak_openid.well_known()
 
-offlineToken=""
-
-# Refresh token
-token = keycloak_openid.refresh_token(offlineToken)
-
-print(token)
 
 
  
