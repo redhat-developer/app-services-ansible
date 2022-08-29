@@ -5,11 +5,22 @@
 Run setup script
 
 ```bash
-make init
+make setup
 ```
 
 ## Running code
 
 ```
-python library/my_test.py /tmp/args.json
+python plugins/actions/create_kafka.py args.json
+```
+
+where args.json can look like follows:
+
+```
+{
+    "ANSIBLE_MODULE_ARGS": {
+        "name": "kafka-name",
+        
+    }
+}
 ```
