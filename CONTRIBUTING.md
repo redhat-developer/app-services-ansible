@@ -14,7 +14,7 @@ make setup
 python3 plugins/module/create_kafka.py ./tests/create_kafka.json
 ```
 
-where args.json can look like follows:
+where create_kafka.json contains input arguments. For example:
 
 ```json
 {
