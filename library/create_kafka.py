@@ -105,17 +105,6 @@ message:
     description: The output error / exception message that is returned in the case the module generates an error / exception.
     type: dict
     returned: in case of error / exception
-    sample: "original_message": {
-            "billing_cloud_account_id": "",
-            "billing_model": "marketplace",
-            "cloud_provider": "aws",
-            "instance_type": "developer",
-            "marketplace": "",
-            "name": "struttin",
-            "plan": "",
-            "reauthentication_enabled": "True",
-            "region": "eu-west-1"
-        }
 kafka_req_resp:
     description: The response object from the Kafka_mgmt API.
     "changed": true,
