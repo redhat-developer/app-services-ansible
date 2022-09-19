@@ -1,0 +1,49 @@
+---
+- name: Create_kafka test
+  hosts: localhost
+  gather_facts: true
+  connection: local
+  tasks:
+  - name: Print the env var value
+    debug:
+      msg: "{{ lookup('env', 'OFFLINE_TOKEN') }}"
+  - name: Create kafka
+    create_kafka:
+      name: "struttin"
+      region: "us-east-1"
+    register:
+      kafka_req_resp 
+  - name: Debug create kafka
+    debug:
+      msg: "{{ kafka_req_resp }}"
+  - name: Create Service Account
+    create_service_account:
+      name: "struttin-jeeves"
+      description: "struttin-jeeves service account"
+    register:
+      srvce_acc_resp_obj
+  - name: Debug service account
+    debug:
+      msg: "{{ srvce_acc_resp_obj }}"
+  # - name: Create kafka ACL Service Binding
+  #   create_kafka_acl_binding:
+  #     # service_account_id: "{{ srvce_acc_resp_obj.client_id }}"
+  #     principal: "c20ace2f-961e-4c66-ab0a-17adeb3f0cc9"
+  #   register:
+  #     acl_resp_obj
+  # - name: Create Kafka Topic
+  #   create_kafka_topic:
+  #     name: "strut"
+  #     kafka_id: {{ kafka_req_resp.id }}
+  #     # kafka_id: "cci3uta87adqtsdn8v0g"
+  #     # partitions: 1
+  #     # replicas: 1
+  #     # config:
+  #     #   retention.ms: 604800000
+  #     #   segment.bytes: 1073741824
+  #   register:
+  #     create_topic_res_obj
+  # - name: Debug create Topic
+  #   debug:
+  #     msg: "{{ create_topic_res_obj }}"
+
