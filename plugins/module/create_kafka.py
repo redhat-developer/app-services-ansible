@@ -159,7 +159,7 @@ def run_module():
         plan=dict(type='str', required=False, default=""),
         billing_cloud_account_id=dict(type='str', required=False, default=""),
         marketplace=dict(type='str', required=False, default=""),
-        billing_model=dict(type='str', required=False, default="marketplace"),
+        billing_model=dict(type='str', required=False, default="standard"),
         instance_type=dict(type='str', required=False, default="developer"),
     )
 
