@@ -2,7 +2,6 @@
 
 
 from __future__ import (absolute_import, division, print_function)
-from sys import api_version
 __metaclass__ = type
 
 DOCUMENTATION = r'''
@@ -24,14 +23,12 @@ options:
         type: str
     cloud_provider:
         description: Cloud provider for the Kafka instance
-        required: false
+        required: true 
         type: str
-        default: aws
     region:
         description: Region of the Kafka instance
-        required: false
+        required: true
         type: str
-        default: eu-west-1
     reauthentication_enabled:
         description: Reauthentication enabled for the Kafka instance
         required: false
@@ -39,48 +36,47 @@ options:
         default: true
     plan:
         description: Plan for the Kafka instance
-        required: false
+        required: true
         type: str
-        default: ""
     billing_cloud_account_id:
         description: Billing cloud account id for the Kafka instance
-        required: false
+        required: false 
         type: str
-        default: ""
     marketplace:
         description: Marketplace for the Kafka instance
-        required: false
+        required: false 
         type: str
-        default: ""
     billing_model:
         description: Billing model for the Kafka instance
-        required: false
+        required: true 
         type: str
-        default: marketplace
     instance_type:
         description: Instance type for the Kafka instance
         required: false
         type: str
-        default: developer
  
 # Specify this value according to your collection
 # in format of namespace.collection.doc_fragment_name
 extends_documentation_fragment:
-    - my_namespace.my_collection.my_doc_fragment_name
+    - redhat.rhosak.rhosak_doc_fragment
 
 author:
     - Red Hat Developer
 '''
 
 EXAMPLES = r'''
-# Pass in a message
+# Pass in a Kakfa request object 
   - name: Create kafka
-    create_kafka:
-      name: "struttin"
+    redhat.rhoask.create_kafka:
+      name: "kafka_name"
+      instance_type: "x1"
+      billing_model: "standard"
+      cloud_provider: "aws"
+      region: "us-east-1"
+      plan: "developer.x1"
+      billing_cloud_account_id: "123456789"
     register:
       kafka_req_resp 
-
- 
 '''
 
 RETURN = r'''
@@ -89,58 +85,16 @@ original_message:
     description: The original kafka request payload that was passed in.
     type: dict
     returned: always
-    sample: "invocation": {
-        "module_args": {
-            "billing_cloud_account_id": "",
-            "billing_model": "marketplace",
-            "cloud_provider": "aws",
-            "instance_type": "developer",
-            "marketplace": "",
-            "name": "struttin",
-            "plan": "",
-            "reauthentication_enabled": "True",
-            "region": "eu-west-1"
-        }
+    sample: As can be found in the Red Hat App-Services Python SDK https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_mgmt_sdk/docs/KafkaRequestPayload.md\#kafkarequestpayload
 message:
     description: The output error / exception message that is returned in the case the module generates an error / exception.
     type: dict
     returned: in case of error / exception
 kafka_req_resp:
     description: The response object from the Kafka_mgmt API.
-    "changed": true,
-        "failed": false,
-        "kafka_req_resp": {
-            "admin_api_server_url": "http://localhost:8000/data/kafka",
-            "billing_cloud_account_id": "",
-            "billing_model": "marketplace",
-            "bootstrap_server_host": "localhost:8000",
-            "browser_url": "http://localhost:8080/calbu9ccff6bdd4jsg30/dashboard",
-            "cloud_provider": "aws",
-            "created_at": "2020-10-05T12:51:24.053142+00:00",
-            "egress_throughput_per_sec": "1Mi",
-            "expires_at": "2022-06-18T05:27:01.816619+00:00",
-            "href": "/api/kafkas_mgmt/v1/kafkas/68Pr91QnNwW6Wis7J7jxM",
-            "id": "68Pr91QnNwW6Wis7J7jxM",
-            "ingress_throughput_per_sec": "1Mi",
-            "instance_type": "developer",
-            "instance_type_name": "Trial",
-            "kafka_storage_size": "10Gi",
-            "kind": "Kafka",
-            "marketplace": "",
-            "max_connection_attempts_per_sec": 50.0,
-            "max_data_retention_period": "P14D",
-            "max_partitions": 100.0,
-            "multi_az": false,
-            "name": "struttin",
-            "owner": "dsaridak",
-            "plan": "",
-            "reauthentication_enabled": true,
-            "region": "us-east-1",
-            "size_id": "x1",
-            "status": "ready",
-            "total_max_connections": 100.0,
-            "updated_at": "2020-10-05T12:56:36.362208+00:00",
-            "version": "3.0.1"
+    sample: As can be found in the Red Hat App-Services Python SDK https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_mgmt_sdk/docs/KafkaRequest.md\#kafkarequest
+    type: dict
+    returned: when the module is successful
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -153,14 +107,14 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         name=dict(type='str', required=True),
-        cloud_provider=dict(type='str', required=False, default='aws'),
-        region=dict(type='str', required=False, default="eu-west-1"),
+        cloud_provider=dict(type='str', required=True),
+        region=dict(type='str', required=True),
         reauthentication_enabled=dict(type='bool', required=False, default=True),
-        plan=dict(type='str', required=False, default=""),
-        billing_cloud_account_id=dict(type='str', required=False, default=""),
-        marketplace=dict(type='str', required=False, default=""),
-        billing_model=dict(type='str', required=False, default="standard"),
-        instance_type=dict(type='str', required=False, default="developer"),
+        plan=dict(type='str', required=True),
+        billing_cloud_account_id=dict(type='str', required=False),
+        marketplace=dict(type='str', required=False),
+        billing_model=dict(type='str', required=True),
+        instance_type=dict(type='str', required=False),
     )
 
     # seed the result dict in the object
@@ -194,9 +148,9 @@ def run_module():
     token = auth.get_access_token()
     
     configuration = rhoas_kafka_mgmt_sdk.Configuration(
-        # host = "https://api.openshift.com",
+        host = "https://api.openshift.com",
         # for use with testing / mocking
-        host = "http://localhost:8000",
+        # host = "http://localhost:8000",
     )
     
     configuration.access_token = token["access_token"]
