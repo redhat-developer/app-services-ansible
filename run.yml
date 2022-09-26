@@ -10,27 +10,43 @@
   - name: Create kafka
     create_kafka:
       name: "struttin"
+      cloud_provider: "aws"
       region: "us-east-1"
+      plan: "developer.x1"
+      billing_model: "standard"
     register:
       kafka_req_resp 
   - name: Debug create kafka
     debug:
-      msg: "{{ kafka_req_resp }}"
-  - name: Create Service Account
-    create_service_account:
-      name: "struttin-jeeves"
-      description: "struttin-jeeves service account"
-    register:
-      srvce_acc_resp_obj
-  - name: Debug service account
-    debug:
-      msg: "{{ srvce_acc_resp_obj }}"
+      msg: "{{ kafka_req_resp['kafka_id'] }}"
+  # - name: Create Service Account
+  #   create_service_account:
+  #     name: "struttin-jeeves"
+  #     description: "struttin-jeeves service account"
+  #   no_log: True
+  #   register:
+  #     srvce_acc_resp_obj
+  # - name: Debug service account
+  #   debug:
+  #     msg: "{{ srvce_acc_resp_obj }}"
   # - name: Create kafka ACL Service Binding
   #   create_kafka_acl_binding:
-  #     # service_account_id: "{{ srvce_acc_resp_obj.client_id }}"
-  #     principal: "c20ace2f-961e-4c66-ab0a-17adeb3f0cc9"
-  #   register:
-  #     acl_resp_obj
+  #     # dynamicly get the kafka id from the kafka_req_resp
+  #     kafka_id: "{{ kafka_req_resp.kafka_id }}"
+  #     # hardcode the kafka_id
+  #     # kafka_id: "ccomo34hmbrsn9mci650"
+
+  #     # dynamicly get the service account id from the srvce_acc_resp_obj
+  #     principal: " {{ srvce_acc_resp_obj['client_id'] }}"
+  #     # hardcode the principal
+  #     # principal: "1c2cbba7-b06b-4554-a847-a8f62a122ba6"
+
+  #     resource_name: "bindacl"
+  #     resource_type: "Topic"
+  #     pattern_type: "PREFIXED"
+  #     operation_type: "all"
+  #     permission_type: "allow"
+      # kafka_admin_url: "https://kafka-admin.dev.struttin.com"
   # - name: Create Kafka Topic
   #   create_kafka_topic:
   #     name: "strut"
