@@ -2,6 +2,8 @@
 
 
 from __future__ import (absolute_import, division, print_function)
+import json
+import time
 __metaclass__ = type
 
 DOCUMENTATION = r'''
@@ -95,6 +97,18 @@ kafka_req_resp:
     sample: As can be found in the Red Hat App-Services Python SDK https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_mgmt_sdk/docs/KafkaRequest.md\#kafkarequest
     type: dict
     returned: when the module is successful
+kafka_admin_url:
+    description: The admin url for the Kafka instance.
+    type: str
+    returned: when the module is successful
+kafka_id:
+    description: The id of the Kafka instance.
+    type: str
+    returned: when the module is successful
+kafka_state:
+    description: The state of the Kafka instance.
+    type: str
+    returned: when the module is successful
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -126,7 +140,10 @@ def run_module():
         changed=False,
         original_message='',
         message='',
-        kafka_req_resp=dict
+        kafka_req_resp=dict,
+        kafka_id='',
+        kafka_admin_url='',
+        kafka_state=''
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -154,6 +171,33 @@ def run_module():
     )
     
     configuration.access_token = token["access_token"]
+    
+    def check_kafka_in_ready_state(kafka_mgmt_api_instance, retries = 10, backoff_in_seconds = 6):
+        attempt = 0
+        # Check for kafka_admin_url to be used to create topic
+        while result['kafka_state'] != "ready":
+            try:
+                # Enter a context with an instance of the API client
+                    kafka_id = result['kafka_id'] # str | The ID of record
+
+                    # example passing only required values which don't have defaults set
+                    try:
+                        kafka_mgmt_api_response = kafka_mgmt_api_instance.get_kafka_by_id(kafka_id)
+                        kafka_mgmt_api_response
+                        result['kafka_admin_url'] = kafka_mgmt_api_response['admin_api_server_url']
+                        result['kafka_state'] = kafka_mgmt_api_response['status']
+                        result['kafka_admin_resp_obj'] = kafka_mgmt_api_response.to_dict()
+                        
+                    except rhoas_kafka_mgmt_sdk.ApiException as e:
+                        rb = json.loads(e.body)
+                        module.fail_json(msg=f'Failed to create new kafka instance with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+            except:
+                if attempt == retries:
+                    raise
+                sleep = (backoff_in_seconds * attempt)
+                time.sleep(sleep)
+                attempt += 1
+                
     # Enter a context with an instance of the API client
     with rhoas_kafka_mgmt_sdk.ApiClient(configuration) as api_client:
         # Create an instance of the API class
@@ -176,14 +220,15 @@ def run_module():
 
             if kafka_req_resp['status'] == 'accepted' or kafka_req_resp['status'] == 'ready' or kafka_req_resp['status'] == 'provisioning':
                 result['kafka_req_resp'] = kafka_req_resp.to_dict()
-                result['changed'] = True
+                result['kafka_id'] = kafka_req_resp['id']
+            check_kafka_in_ready_state(api_instance)
             
+            result['changed'] = True
             # exit the module and return the state 
             module.exit_json(**result)
         except rhoas_kafka_mgmt_sdk.ApiException as e:
-            print("Exception when calling DefaultApi -> create_kafka: %s\n" % e)
-            result['message'] = e
-            module.fail_json(msg='Failed to create kafka instance', **result)
+            rb = json.loads(e.body)
+            module.fail_json(msg=f'Failed to create new kafka instance with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
 
 def main():
     run_module()
