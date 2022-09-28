@@ -63,7 +63,15 @@ srvce_acc_resp_obj:
     description: The service account response object
     type: dict
     returned: when service account is created successfully
-    sample: Client ID and Client Secret of the service account. 
+    sample: Client ID and Client Secret of the service account.
+client_id:
+    description: The client id of the service account
+    type: str
+    returned: when service account is created successfully
+client_secret:
+    description: The client secret of the service account
+    type: str
+    returned: when service account is created successfully
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -88,7 +96,9 @@ def run_module():
         changed=False,
         original_message='',
         message='',
-        srvce_acc_resp_obj=dict
+        srvce_acc_resp_obj=dict,
+        client_id='',
+        client_secret='',
         
     )
 
@@ -133,6 +143,8 @@ def run_module():
                 "client_id" : api_response['client_id'],
                 'client_secret': api_response['secret'],
             }
+            result['client_id'] = api_response['client_id']
+            result['client_secret'] = api_response['secret']
             
             result['changed'] = True
 
