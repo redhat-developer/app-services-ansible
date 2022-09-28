@@ -3,5 +3,5 @@ setup:
 	./scripts/setup.sh
 
 .PHONY: local-dev
- local-dev:
- 	./scripts/local-dev.sh
+local-dev:
+ 	./scripts/local_dev.sh
