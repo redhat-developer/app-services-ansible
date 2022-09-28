@@ -99,7 +99,6 @@ def run_module():
         srvce_acc_resp_obj=dict,
         client_id='',
         client_secret='',
-        
     )
 
     # the AnsibleModule object will be our abstraction working with Ansible
@@ -137,8 +136,6 @@ def run_module():
             ) 
             api_response = api_instance.create_service_account(service_account_create_request_data)
             
-            print('type api_response', api_response)
-            print('client_id == ', api_response['client_id'])
             result['srvce_acc_resp_obj'] = {
                 "client_id" : api_response['client_id'],
                 'client_secret': api_response['secret'],

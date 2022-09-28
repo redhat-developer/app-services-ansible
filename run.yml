@@ -9,7 +9,7 @@
       msg: "{{ lookup('env', 'OFFLINE_TOKEN') }}"
   - name: Create kafka
     create_kafka:
-      name: "struttin"
+      name: "kafka-unique-name"
       cloud_provider: "aws"
       region: "us-east-1"
       plan: "developer.x1"
@@ -19,47 +19,49 @@
   - name: Debug create kafka
     debug:
       msg: "{{ kafka_req_resp['kafka_id'] }}"
-  # - name: Create Service Account
-  #   create_service_account:
-  #     name: "struttin-jeeves"
-  #     description: "struttin-jeeves service account"
-  #   no_log: True
-  #   register:
-  #     srvce_acc_resp_obj
-  # - name: Debug service account
-  #   debug:
-  #     msg: "{{ srvce_acc_resp_obj }}"
-  # - name: Create kafka ACL Service Binding
-  #   create_kafka_acl_binding:
-  #     # dynamicly get the kafka id from the kafka_req_resp
-  #     kafka_id: "{{ kafka_req_resp.kafka_id }}"
-  #     # hardcode the kafka_id
-  #     # kafka_id: "ccomo34hmbrsn9mci650"
+  - name: Create Service Account
+    create_service_account:
+      name: "jeeves"
+      description: "jeeves service account"
+    no_log: True
+    register:
+      srvce_acc_resp_obj
+  - name: Debug service account
+    debug:
+      msg: "{{ srvce_acc_resp_obj }}"
+  - name: Create kafka ACL Service Binding
+    create_kafka_acl_binding:
+      # dynamicly get the kafka id from the kafka_req_resp
+      kafka_id: "{{ kafka_req_resp['kafka_id'] }}"
+      # hardcode the kafka_id
+      # kafka_id: "ccpb4u42l6l6b805dqhg"
 
-  #     # dynamicly get the service account id from the srvce_acc_resp_obj
-  #     principal: " {{ srvce_acc_resp_obj['client_id'] }}"
-  #     # hardcode the principal
-  #     # principal: "1c2cbba7-b06b-4554-a847-a8f62a122ba6"
+      # dynamicly get the service account id from the srvce_acc_resp_obj
+      principal: " {{ srvce_acc_resp_obj['client_id'] }}"
+      # hardcode the principal
+      # principal: "be5b2479-bd40-493d-8481-ec6c11c0ced7"
 
-  #     resource_name: "bindacl"
-  #     resource_type: "Topic"
-  #     pattern_type: "PREFIXED"
-  #     operation_type: "all"
-  #     permission_type: "allow"
+      resource_name: "bindacl"
+      resource_type: "Topic"
+      pattern_type: "PREFIXED"
+      operation_type: "all"
+      permission_type: "allow"
       # kafka_admin_url: "https://kafka-admin.dev.struttin.com"
-  # - name: Create Kafka Topic
-  #   create_kafka_topic:
-  #     name: "strut"
-  #     kafka_id: {{ kafka_req_resp.id }}
-  #     # kafka_id: "cci3uta87adqtsdn8v0g"
-  #     # partitions: 1
-  #     # replicas: 1
-  #     # config:
-  #     #   retention.ms: 604800000
-  #     #   segment.bytes: 1073741824
-  #   register:
-  #     create_topic_res_obj
-  # - name: Debug create Topic
-  #   debug:
-  #     msg: "{{ create_topic_res_obj }}"
-
+  - name: Create Kafka Topic
+    create_kafka_topic:
+      name: "test-topic"
+      kafka_id: "{{ kafka_req_resp['kafka_id'] }}"
+      # kafka_id: "kafka_id"
+      partitions: 1
+      retention_period_ms: "86400666"
+      retention_size_bytes: "1073741824"
+      # cleanup_policy: "compact"
+  - name: Create Kafka Topic2
+    create_kafka_topic:
+      name: "strut6"
+      kafka_id: "{{ kafka_req_resp['kafka_id'] }}"
+      # kafka_id: "kafka_if"
+      partitions: 1
+      # retention_period_ms: "86400666"
+      # retention_size_bytes: "1073741824"
+      # cleanup_policy: "delete"

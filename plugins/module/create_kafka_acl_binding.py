@@ -112,9 +112,6 @@ from rhoas_kafka_instance_sdk.model.acl_permission_type import AclPermissionType
 
 import rhoas_kafka_instance_sdk
 
-configuration = rhoas_kafka_instance_sdk.Configuration(
-    host = "https://api.openshift.com"
-)
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -174,7 +171,7 @@ def run_module():
         
     def get_kafka_admin_url(kafka_mgmt_api_instance):
         # Check for kafka_admin_url to be used to create topic
-        while (result['kafka_admin_url'] == ""):
+        while (result['kafka_admin_url'] == "") or (result['kafka_admin_url'] == None):
             # Enter a context with an instance of the API client
                 kafka_id = module.params['kafka_id'] 
 
@@ -188,12 +185,14 @@ def run_module():
                     rb = json.loads(e.body)
                     module.fail_json(msg=f'Failed to create Access Control List binding with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
                 
+    configuration = rhoas_kafka_instance_sdk.Configuration()
+    
     # Check for kafka_admin_url to be used to create topic
     if (module.params['kafka_admin_url'] is None) or (module.params['kafka_admin_url'] == ""):
         get_kafka_admin_url(get_kafka_mgmt_client())
+    else:
+        configuration.host = module.params['kafka_admin_url']
             
-
-    configuration.host = result['kafka_admin_url']
     configuration.access_token = token["access_token"]
     with rhoas_kafka_instance_sdk.ApiClient(configuration) as api_client:
         api_instance = acls_api.AclsApi(api_client)
