@@ -4,7 +4,7 @@
   gather_facts: true
   connection: local
   collections:
-    -dimakis.rhosak_test
+    - dimakis.rhosak_test
   tasks:
   - name: Print the env var value
     debug:
