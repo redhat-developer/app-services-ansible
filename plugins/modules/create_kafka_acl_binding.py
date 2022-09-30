@@ -1,6 +1,7 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-
+# Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
 import json
 __metaclass__ = type
@@ -13,7 +14,7 @@ short_description: Create Access Control Lists (ACLs) for Red Hat OpenShift Stre
 
 # If this is part of a collection, you need to use semantic versioning,
 # i.e. the version is of the form "2.5.0" and not "2.4".
-version_added: "0.1.0"
+version_added: "0.1.1-aplha"
 
 description: Create Access Control Lists (ACLs) Red Hat OpenShift Streams for Apache Kafka Instance. More details can be found [here](https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclBinding.md)
 
@@ -31,7 +32,7 @@ options:
         required: false    
         type: str
     resource_type:
-        description: Resource type of ACL, full list of possible values can be found [here](https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclResourceType.md)
+        description: Resource type of ACL, full list of possible values can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclResourceType.md)
         required: true
         type: str
     resource_name:
@@ -39,19 +40,21 @@ options:
         required: true
         type: str
     pattern_type:
-        description: Pattern type of ACL, full list of possible values can be found [here](https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclPatternType.md)
+        description: Pattern type of ACL, full list of possible values can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclPatternType.md
         required: true
         type: str
     operation_type:
-        description: Operation type of ACL, full list of possible values can be found [here](https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclOperation.md)
+        description: Operation type of ACL, full list of possible values can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclOperation.md
         required: true
         type: str
     permission_type:
-        description: Permission type of ACL, full list of possible values can be found [here](https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclPermissionType.md)
+        description: Permission type of ACL, full list of possible values can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclPermissionType.md
         required: true
         type: str
  
-
+extends_documentation_fragment:
+    - dimakis.rhosak_test.rhosak_doc_fragment
+    
 author:
     - Red Hat Developer
 '''
@@ -76,18 +79,14 @@ original_message:
     description: The original name param that was passed in.
     type: str
     returned: always
-    sample: can be found [here](https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclBinding.md)
-message:
-    description: The output error / exception message that is returned in the case the module generates an error / exception.
-    type: dict
-    returned: in case of error / exception
+    sample: can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclBinding.md
 message:
     description: "ACL Binding Created"
     type: dict
     returned: in success case
 kafka_req_resp:
     description: The response object from the Kafka_mgmt API.
-    sample: As can be found in the Red Hat App-Services Python SDK https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_mgmt_sdk/docs/KafkaRequest.md\#kafkarequest
+    sample: As can be found in the Red Hat App-Services Python SDK https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_mgmt_sdk/docs/KafkaRequest.md#kafkarequest
     type: dict
     returned: If no kafka_admin_url is passed but the Kafka ID is passed, when the module is successful.
 kafka_admin_url:

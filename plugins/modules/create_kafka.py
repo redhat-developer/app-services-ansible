@@ -1,6 +1,7 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-
+# Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
 import json
 import time
@@ -14,7 +15,7 @@ short_description: Create Red Hat OpenShift Streams for Apache Kafka Instance
 
 # If this is part of a collection, you need to use semantic versioning,
 # i.e. the version is of the form "2.5.0" and not "2.4".
-version_added: "0.1.0"
+version_added: "0.1.1-aplha"
 
 description: Create Red Hat OpenShift Streams for Apache Kafka Instance
 
@@ -60,8 +61,8 @@ options:
 # Specify this value according to your collection
 # in format of namespace.collection.doc_fragment_name
 extends_documentation_fragment:
-    - redhat.rhosak.rhosak_doc_fragment
-
+    - dimakis.rhosak_test.rhosak_doc_fragment
+    
 author:
     - Red Hat Developer
 '''
@@ -149,10 +150,10 @@ def run_module():
     # the AnsibleModule object will be our abstraction working with Ansible
     # this includes instantiation, a couple of common attr would be the
     # args/params passed to the execution, as well as if the module
-    # supports check mode
+    # supports mode
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
     # if the user is working with this module in only check mode we do not

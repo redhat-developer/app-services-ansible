@@ -1,6 +1,7 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-
+# Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
 import json
 __metaclass__ = type
@@ -13,7 +14,7 @@ short_description: Create a topic on a Red Hat OpenShift Streams for Apache Kafk
 
 # If this is part of a collection, you need to use semantic versioning,
 # i.e. the version is of the form "2.5.0" and not "2.4".
-version_added: "0.1.0"
+version_added: "0.1.1-aplha"
 
 description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance
 
@@ -47,6 +48,9 @@ options:
         required: false
         type: str
  
+extends_documentation_fragment:
+    - dimakis.rhosak_test.rhosak_doc_fragment
+    
 author:
     - Red Hat Developer
 '''

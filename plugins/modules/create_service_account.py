@@ -1,6 +1,7 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-
+# Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -12,7 +13,7 @@ short_description: Create a Service Account for use with Red Hat Openshift Appli
 
 # If this is part of a collection, you need to use semantic versioning,
 # i.e. the version is of the form "2.5.0" and not "2.4".
-version_added: "0.1.0"
+version_added: "0.1.1-aplha"
 
 description: Create a Service Account for use with Red Hat Openshift Application Services 
 
@@ -29,7 +30,7 @@ options:
 # Specify this value according to your collection
 # in format of namespace.collection.doc_fragment_name
 extends_documentation_fragment:
-    - redhat.rhoask.my_doc_fragment_name
+    - dimakis.rhosak_test.rhosak_doc_fragment
 
 author:
     - Red Hat Developer
@@ -51,10 +52,6 @@ original_message:
     description: The original dict with params that were passed in.
     type: dict
     returned: always
-    sample: "module_args": {
-                "description": "service account description",
-                "name": "service_account_name"
-                }
 message:
     description: The output error / exception message that is returned in the case the module generates an error / exception.
     type: dict
@@ -64,6 +61,14 @@ srvce_acc_resp_obj:
     type: dict
     returned: when service account is created successfully
     sample: Client ID and Client Secret of the service account. 
+client_id:
+    description: The client id of the service account
+    type: str
+    returned: when service account is created successfully
+client_secret:
+    description: The client secret of the service account
+    type: str
+    returned: when service account is created successfully
 '''
 
 from ansible.module_utils.basic import AnsibleModule
