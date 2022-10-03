@@ -1,7 +1,7 @@
- .PHONY: setup 
+.PHONY: setup 
 setup: 
-	./scripts/setup.sh
+	. ./scripts/setup.sh
 
 .PHONY: local-dev
 local-dev:
- 	./scripts/local_dev.sh
+	. ./scripts/local_dev.sh
