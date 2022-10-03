@@ -16,7 +16,7 @@ short_description: Create Access Control Lists (ACLs) for Red Hat OpenShift Stre
 # i.e. the version is of the form "2.5.0" and not "2.4".
 version_added: "0.1.1-aplha"
 
-description: Create Access Control Lists (ACLs) Red Hat OpenShift Streams for Apache Kafka Instance. More details can be found [here](https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclBinding.md)
+description: Create Access Control Lists (ACLs) Red Hat OpenShift Streams for Apache Kafka Instance. More details can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclBinding.md
 
 options:
     principal:
@@ -32,7 +32,7 @@ options:
         required: false    
         type: str
     resource_type:
-        description: Resource type of ACL, full list of possible values can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclResourceType.md)
+        description: Resource type of ACL, full list of possible values can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclResourceType.md
         required: true
         type: str
     resource_name:
@@ -162,6 +162,8 @@ def run_module():
     token = auth.get_access_token()
     kafka_mgmt_config.access_token = token["access_token"]
     
+    configuration = rhoas_kafka_instance_sdk.Configuration()
+    
     def get_kafka_mgmt_client():
         with rhoas_kafka_mgmt_sdk.ApiClient(kafka_mgmt_config) as kafka_mgmt_api_client:
             # Create an instance of the API class
@@ -179,12 +181,11 @@ def run_module():
                     kafka_mgmt_api_response
                     result['kafka_admin_url'] = kafka_mgmt_api_response['admin_api_server_url']
                     result['kafka_admin_resp_obj'] = kafka_mgmt_api_response.to_dict()
-                    
+                    configuration.host = result['kafka_admin_url']
                 except rhoas_kafka_mgmt_sdk.ApiException as e:
                     rb = json.loads(e.body)
                     module.fail_json(msg=f'Failed to create Access Control List binding with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
                 
-    configuration = rhoas_kafka_instance_sdk.Configuration()
     
     # Check for kafka_admin_url to be used to create topic
     if (module.params['kafka_admin_url'] is None) or (module.params['kafka_admin_url'] == ""):
