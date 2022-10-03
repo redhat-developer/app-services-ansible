@@ -2,4 +2,4 @@
 
  mkdir -p library
  rm -rf library/*
- cp -R plugins/module/*.py library
+ cp -R plugins/modules/*.py library
