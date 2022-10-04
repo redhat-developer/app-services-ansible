@@ -3,9 +3,9 @@
 
 # Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
+import json
 
-from plugins.modules.constants import SERVICE_ACCOUNTS_API_URL
-__metaclass__ = type
+from ..module_utils.constants.constants import SSO_BASE_HOST
 
 DOCUMENTATION = r'''
 ---
@@ -74,7 +74,7 @@ def run_module():
     token = auth.get_access_token()
     
     configuration = rhoas_service_accounts_mgmt_sdk.Configuration(
-        host = SERVICE_ACCOUNTS_API_URL
+        host = SSO_BASE_HOST
     )
     configuration.access_token = token["access_token"]
 
@@ -87,9 +87,9 @@ def run_module():
             result['changed'] = True
             module.exit_json(**result)
         except rhoas_service_accounts_mgmt_sdk.ApiException as e:
-            print("Exception when calling ServiceAccountsApi->delete_service_account: %s\n" % e)
-            result['message'] = e
-            module.fail_json(msg='Failed to delete service account', **result)
+            rb = json.loads(e.body)
+            result['message'] = e.body
+            module.fail_json(msg=f'Failed to delete service account with ID: `{service_account_id}`. Error: `{rb["error"]}`. Reason for failure: `{rb["error_description"]}`.')
         except Exception as e:
             result['message'] = e
             module.fail_json(msg='Failed to delete service account', **result)
