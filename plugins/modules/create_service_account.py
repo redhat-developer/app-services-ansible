@@ -3,7 +3,8 @@
 
 # Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+
+from ..module_utils.constants.constants import SSO_BASE_HOST
 
 DOCUMENTATION = r'''
 ---
@@ -78,17 +79,11 @@ from rhoas_service_accounts_mgmt_sdk.api import service_accounts_api
 from rhoas_service_accounts_mgmt_sdk.model.service_account_create_request_data import ServiceAccountCreateRequestData
 
 def run_module():
-    # define available arguments/parameters a user can pass to the module
     module_args = dict(
         name=dict(type='str', required=True),
         description=dict(type='str', required=True),
     )
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # changed is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
         original_message='',
@@ -98,31 +93,22 @@ def run_module():
         client_secret='',
     )
 
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # module.check_mode = False
     if module.check_mode:
         module.exit_json(**result)
 
     token = auth.get_access_token()
     
     configuration = rhoas_service_accounts_mgmt_sdk.Configuration(
-        host = "https://sso.redhat.com/auth/realms/redhat-external",
+        host = SSO_BASE_HOST,
     )
     configuration.access_token = token["access_token"]
 
     
-    # Enter a context with an instance of the API client
     with rhoas_service_accounts_mgmt_sdk.ApiClient(configuration) as api_client:
         # Create an instance of the API class
         api_instance = service_accounts_api.ServiceAccountsApi(api_client)
@@ -142,13 +128,13 @@ def run_module():
             
             result['changed'] = True
 
-            # in the event of a successful module execution, you will want to
-            # simple AnsibleModule.exit_json(), passing the key/value results
             module.exit_json(**result)
         except rhoas_service_accounts_mgmt_sdk.ApiException as e:
-            print("Exception when calling ServiceAccountsApi->create_service_account: %s\n" % e)
+            result['message'] = e.body
+            module.fail_json(msg='Failed to create kafka instance, API exception', **result)
+        except Exception as e:
             result['message'] = e
-            module.fail_json(msg='Failed to create kafka instance', **result)
+            module.fail_json(msg='Failed to create kafka instance, with general exception', **result)   
 
 def main():
     run_module()
