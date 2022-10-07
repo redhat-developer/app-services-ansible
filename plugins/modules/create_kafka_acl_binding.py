@@ -4,7 +4,8 @@
 # Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
 import json
-__metaclass__ = type
+
+from ..module_utils.constants.constants import API_BASE_HOST
 
 DOCUMENTATION = r'''
 ---
@@ -12,9 +13,7 @@ module: create_kafka_acl_binding
 
 short_description: Create Access Control Lists (ACLs) for Red Hat OpenShift Streams for Apache Kafka Instance
 
-# If this is part of a collection, you need to use semantic versioning,
-# i.e. the version is of the form "2.5.0" and not "2.4".
-version_added: "0.1.1-aplha"
+version_added: "0.1.1-alpha"
 
 description: Create Access Control Lists (ACLs) Red Hat OpenShift Streams for Apache Kafka Instance. More details can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclBinding.md
 
@@ -145,7 +144,7 @@ def run_module():
     # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
     # if the user is working with this module in only check mode we do not
@@ -156,7 +155,7 @@ def run_module():
         module.exit_json(**result)
 
     kafka_mgmt_config = rhoas_kafka_mgmt_sdk.Configuration(
-        host = "https://api.openshift.com",
+        host = API_BASE_HOST,
     )
  
     token = auth.get_access_token()
@@ -184,7 +183,9 @@ def run_module():
                     configuration.host = result['kafka_admin_url']
                 except rhoas_kafka_mgmt_sdk.ApiException as e:
                     rb = json.loads(e.body)
-                    module.fail_json(msg=f'Failed to create Access Control List binding with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+                    module.fail_json(msg=f'Failed to create Access Control List binding with API exception code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+                except Exception as e:
+                    module.fail_json(msg=f'Failed to create Access Control List binding with exception: {e}')
                 
     
     # Check for kafka_admin_url to be used to create topic
@@ -230,6 +231,8 @@ def run_module():
         except rhoas_kafka_instance_sdk.ApiException as e:
             rb = json.loads(e.body)
             module.fail_json(msg=f'Failed to create Access Control List binding with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+        except Exception as e:
+            module.fail_json(msg=f'Failed to create Access Control List binding with error: `{e}`.')
 
 
 def main():
