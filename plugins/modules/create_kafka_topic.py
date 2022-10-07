@@ -4,7 +4,8 @@
 # Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
 import json
-__metaclass__ = type
+
+from ..module_utils.constants.constants import API_BASE_HOST
 
 DOCUMENTATION = r'''
 ---
@@ -78,7 +79,7 @@ original_message:
     type: dict 
     returned: always in case of successful execution
 message:
-    description: A message detailing topic created succesfully.
+    description: A message detailing topic created successfully.
     type: str
     returned: always in case of successful execution
     sample: "Topic created successfully"
@@ -107,14 +108,12 @@ from rhoas_kafka_instance_sdk.model.topic_settings import TopicSettings
 from rhoas_kafka_instance_sdk.model.config_entry import ConfigEntry
 
 configuration = rhoas_kafka_instance_sdk.Configuration(
-    host = "https://api.openshift.com"
-    # host = "http://localhost:8000"
+    host = API_BASE_HOST
 )
 
 token = auth.get_access_token()
 
 def run_module():
-    # define available arguments/parameters a user can pass to the module
     module_args = dict(
         name=dict(type='str', required=True),
         kafka_id=dict(type='str', required=True),
@@ -125,11 +124,6 @@ def run_module():
         cleanup_policy=dict(type='str', required=False),
     )
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # changed is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
         original_message=dict,
@@ -139,24 +133,16 @@ def run_module():
         kafka_admin_url=''
     )
 
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # module.check_mode = False
     if module.check_mode:
         module.exit_json(**result)
 
     kafka_mgmt_config = rhoas_kafka_mgmt_sdk.Configuration(
-        host = "https://api.openshift.com",
+        host = API_BASE_HOST,
     )
  
     token = auth.get_access_token()
@@ -182,7 +168,9 @@ def run_module():
                     
                 except rhoas_kafka_mgmt_sdk.ApiException as e:
                     rb = json.loads(e.body)
-                    module.fail_json(msg=f'Failed to create kafka topic with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+                    module.fail_json(msg=f'Failed to create kafka topic with API exception code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+                except Exception as e:
+                    module.fail_json(msg=f'Failed to create kafka topic with general exception: `{e}`.')
                 
     # Check for kafka_admin_url to be used to create topic
     if (module.params['kafka_admin_url'] is None) or (module.params['kafka_admin_url'] == ""):
@@ -247,6 +235,8 @@ def run_module():
             print("Exception when calling TopicsApi->create_topic: %s \ n" % e)
             rb = json.loads(e.body)
             module.fail_json(msg=f'Failed to create kafka topic with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}` because `{rb["detail"]}`)', **result)
+        except Exception as e:
+            module.fail_json(msg=f'Failed to create kafka topic with error: `{e}`', **result)
 
 def main():
     run_module()
