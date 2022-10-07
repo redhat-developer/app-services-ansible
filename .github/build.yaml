@@ -1,0 +1,24 @@
+name: Build
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Use python
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x'
+      - name: Setup env
+        run: make setup
+      ## Install ansible and run mock then..
+      ## run.yaml should be moved to folder with cases
+      - name: run
+        run: ansible-playbook 'run.yaml' -vvv
