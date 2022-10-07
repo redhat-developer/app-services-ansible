@@ -5,7 +5,8 @@
 from __future__ import (absolute_import, division, print_function)
 import json
 import time
-__metaclass__ = type
+
+from ..module_utils.constants.constants import SSO_BASE_HOST
 
 DOCUMENTATION = r'''
 ---
@@ -164,11 +165,8 @@ def run_module():
         module.exit_json(**result)
 
     token = auth.get_access_token()
-    
     configuration = rhoas_kafka_mgmt_sdk.Configuration(
-        host = "https://api.openshift.com",
-        # for use with testing / mocking
-        # host = "http://localhost:8000",
+        host = SSO_BASE_HOST,
     )
     
     configuration.access_token = token["access_token"]
@@ -230,6 +228,8 @@ def run_module():
         except rhoas_kafka_mgmt_sdk.ApiException as e:
             rb = json.loads(e.body)
             module.fail_json(msg=f'Failed to create new kafka instance with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+        except Exception as e:
+            module.fail_json(msg=f'Failed to create new kafka instance with error: `{e}`.')
 
 def main():
     run_module()
