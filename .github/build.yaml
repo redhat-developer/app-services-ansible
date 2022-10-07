@@ -4,7 +4,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-
+env:
+  API_BASE_HOST="http://localhost:8080"
 jobs:
   build:
     name: Build and test
@@ -18,7 +19,12 @@ jobs:
           python-version: '3.x'
       - name: Setup env
         run: make setup
-      ## Install ansible and run mock then..
-      ## run.yaml should be moved to folder with cases
-      - name: run
-        run: ansible-playbook 'run.yaml' -vvv
+       - name: Run mock
+         uses: addnab/docker-run-action@v3
+         with:
+              image: quay.io/rhosak/api-mock
+      - name: Run playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: run.yml
+          directory: ./
