@@ -2,8 +2,8 @@
 
 
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
 
+from ..module_utils.constants.constants import API_BASE_HOST
 DOCUMENTATION = r'''
 ---
 module: delete_kafka_by_id 
@@ -71,7 +71,7 @@ def run_module():
     token = auth.get_access_token()
     
     configuration = rhoas_kafka_mgmt_sdk.Configuration(
-        host = "https://api.openshift.com",
+        host = API_BASE_HOST,
     )
     
     configuration.access_token = token["access_token"]
