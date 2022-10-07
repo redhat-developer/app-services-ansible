@@ -3,67 +3,79 @@
   hosts: localhost
   gather_facts: true
   connection: local
-  collections:
-    - dimakis.rhosak_test
   tasks:
-  - name: Print the env var value
-    debug:
-      msg: "{{ lookup('env', 'OFFLINE_TOKEN') }}"
   - name: Create kafka
-    create_kafka:
-      name: "kafka-unique-name"
+    redhat_developer.rhoas.create_kafka:
+      name: "Unique_name"
       cloud_provider: "aws"
       region: "us-east-1"
       plan: "developer.x1"
       billing_model: "standard"
     register:
-      kafka_req_resp 
+      kafka_req_resp_obj
   - name: Debug create kafka
     debug:
-      msg: "{{ kafka_req_resp['kafka_id'] }}"
+      msg: "{{ kafka_req_resp_obj['kafka_id'] }}"
   - name: Create Service Account
-    create_service_account:
+    redhat_developer.rhoas.create_service_account:
       name: "jeeves"
       description: "jeeves service account"
     no_log: True
     register:
       srvce_acc_resp_obj
-  - name: Debug service account
-    debug:
-      msg: "{{ srvce_acc_resp_obj }}"
   - name: Create kafka ACL Service Binding
-    create_kafka_acl_binding:
-      # dynamicly get the kafka id from the kafka_req_resp
-      kafka_id: "{{ kafka_req_resp['kafka_id'] }}"
-      # hardcode the kafka_id
-      # kafka_id: "ccpb4u42l6l6b805dqhg"
+    redhat_developer.rhoas.create_kafka_acl_binding:
+      # dynamically get the kafka id from the kafka_req_resp
+      kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
+      # to hardcode the kafka_id uncomment and use the following line
+      # kafka_id: "KAFKA_ID"
 
-      # dynamicly get the service account id from the srvce_acc_resp_obj
+      # dynamically get the service account id from the srvce_acc_resp_obj
       principal: " {{ srvce_acc_resp_obj['client_id'] }}"
-      # hardcode the principal
-      # principal: "be5b2479-bd40-493d-8481-ec6c11c0ced7"
+      # to hardcode the principal_id uncomment and use the following line
+      # principal: "PRINCIPAL_ID"
 
-      resource_name: "bindacl"
+      resource_name: "topic_name"
       resource_type: "Topic"
       pattern_type: "PREFIXED"
       operation_type: "all"
       permission_type: "allow"
+      # passing the kafka_admin_url from the kafka_req_resp_obj is more efficient as one less API call is made
       # kafka_admin_url: "https://kafka-admin.dev.struttin.com"
   - name: Create Kafka Topic
-    create_kafka_topic:
-      name: "test-topic"
-      kafka_id: "{{ kafka_req_resp['kafka_id'] }}"
-      # kafka_id: "kafka_id"
+    redhat_developer.rhoas.create_kafka_topic:
+      name: "topic_one"
+      kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
+      # to hardcode the kafka_id uncomment and use the following line
+      # kafka_id: "KAFKA_ID"
       partitions: 1
       retention_period_ms: "86400666"
       retention_size_bytes: "1073741824"
-      # cleanup_policy: "compact"
+      cleanup_policy: "compact"
+    register:
+      kafka_topic_resp_obj
   - name: Create Kafka Topic2
-    create_kafka_topic:
-      name: "strut6"
-      kafka_id: "{{ kafka_req_resp['kafka_id'] }}"
-      # kafka_id: "kafka_if"
+    redhat_developer.rhoas.create_kafka_topic:
+      name: "topic_two"
+      kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
+      # to hardcode the kafka_id uncomment and use the following line
+      # kafka_id: "KAFKA_ID"
       partitions: 1
-      # retention_period_ms: "86400666"
-      # retention_size_bytes: "1073741824"
-      # cleanup_policy: "delete"
+    register:
+      kafka_topic_resp_obj2
+  - name: Delete kafka topic_one
+    redhat_developer.rhoas.delete_kafka_topic:
+      name: "topic_one"
+      kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
+      # to hardcode the kafka_id uncomment and use the following line
+      # kafka_id: "KAFKA_ID"
+    register:
+      kafka_topic_resp_obj
+  - name: Delete kafka topic_two
+    redhat_developer.rhoas.delete_kafka_topic:
+      name: "topic_two"
+      kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
+      # to hardcode the kafka_id uncomment and use the following line
+      # kafka_id: "KAFKA_ID"
+    register:
+      kafka_topic_resp_obj
