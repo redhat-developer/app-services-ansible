@@ -20,4 +20,3 @@ This collection requires some additional dependencies to be installed:
 ```shell
 pip install rhoas-sdks --force-reinstall
 ```
-

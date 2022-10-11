@@ -15,7 +15,7 @@ make setup
 python3 plugins/module/create_kafka.py ./tests/create_kafka.json
 ```
 
-where create_kafka.json contains input arguments. For example:
+Where `create_kafka.json` contains input arguments. For example:
 
 ```json
 {
@@ -28,9 +28,21 @@ where create_kafka.json contains input arguments. For example:
 
 ## Using collection
 
-All modules require an 'OFFLINE_TOKEN' environment variable to be set with a valid token. This token is used to authenticate the user. The token is an OpenShift Cluster Manager API Token and can be found [here](https://console.redhat.com/openshift/token)
+All modules require an 'OFFLINE_TOKEN' to be used with for authentication with the Red Hat OpenShift Application Services API. The token can be passed in like this:
 
-Two further environment variables are used for the the collection to work. These environment variables can be placed in a `.env` file. 
+```yaml
+...
+  tasks:
+  - name: Create kafka
+    redhat_developer.rhoas.create_kafka:
+      name: "unique_kafka_name"
+      openshift_offline_token: "OFFLINE_TOKEN"
+...
+```
+
+If the token is not passed in, the module will attempt to read it from the environment variable `OFFLINE_TOKEN`. This token is used to authenticate the user. The token is an OpenShift Cluster Manager API Token and can be found [here](https://console.redhat.com/openshift/token)
+
+Two further environment variables are used for the collection to work. These environment variables can be placed in a `.env` file.
 They are:
 
 - `API_BASE_HOST` - The base host for the API. This is the base URL for the API. For example, `https://api.openshift.com`
@@ -40,11 +52,12 @@ If neither of these environment variables are set, the collection will default t
 
 ## Testing with Ansible Playbooks
 
-A further way to run / test the code locally is with the use of an [Ansible Playbook](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#verifying-your-module-code-in-a-playbook). 
+A further way to run / test the code locally is with the use of an [Ansible Playbook](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#verifying-your-module-code-in-a-playbook).
+
 To do so the following steps are required:
 
-- run `make local-dev` to create a local Ansible Library collection in the root of the project. This will copy existing modules to the collection. 
-- a playbook can be created in the root of the project and ran via the `ansible-playbook` command. For example:
+- Run `make local-dev` to create a local Ansible Library collection in the root of the project. This will copy existing modules to the collection.
+- A playbook can be created in the root of the project and ran via the `ansible-playbook` command. For example:
 
 ```bash
 ansible-playbook 'playbook.yaml' -vvv
@@ -57,7 +70,7 @@ where playbook.yml contains the following:
 - name: Create_kafka test
   hosts: localhost
   connection: local
-  gather_facts: true
+  gather_facts: false 
   tasks:
     - name: Create Kafka
       create_kafka:
@@ -65,12 +78,11 @@ where playbook.yml contains the following:
 ```
 
 **Note:**
-The `create_kafka` command in the task needs to be the **Fully Qualified Name** of the module for collection developemnet i.e. `redhat.rhoask.create_kafka`.
-
+The `create_kafka` command in the task needs to be the **Fully Qualified Name** of the module for collection development i.e. `redhat_developer.rhoas.create_kafka`.
 
 ```yaml
 ...
-  gather_facts: true
+  gather_facts: false
   tasks:
     - name: Create Kafka
       redhat.rhosak.create_kafka:
@@ -78,6 +90,4 @@ The `create_kafka` command in the task needs to be the **Fully Qualified Name** 
 ...
 ```
 
-Just remember to add the module back to the collection when you are done with the testing againsta a playbook.
-
-
+Just remember to add the module back to the collection when you are done with the testing against a playbook.
