@@ -4,9 +4,11 @@
 # Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
 import json
+import os
 import time
 
-from ..module_utils.constants.constants import SSO_BASE_HOST
+from ..module_utils.constants.constants import API_BASE_HOST
+from dotenv import load_dotenv
 
 DOCUMENTATION = r'''
 ---
@@ -111,6 +113,10 @@ kafka_state:
     description: The state of the Kafka instance.
     type: str
     returned: when the module is successful
+env_url_error:
+    description: The error message returned if no environment variable is passed for the BASE_HOST URL.
+    type: str
+    returned: when the module uses default url instead of passed environment variable
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -118,6 +124,8 @@ import rhoas_kafka_mgmt_sdk
 from rhoas_kafka_mgmt_sdk.api import default_api
 from rhoas_kafka_mgmt_sdk.model.kafka_request_payload import KafkaRequestPayload
 import auth.rhoas_auth as auth
+
+load_dotenv(".env")
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -133,11 +141,6 @@ def run_module():
         instance_type=dict(type='str', required=False),
     )
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # changed is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
         original_message='',
@@ -145,33 +148,32 @@ def run_module():
         kafka_req_resp=dict,
         kafka_id='',
         kafka_admin_url='',
-        kafka_state=''
+        kafka_state='',
+        env_url_error='',
     )
 
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports mode
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=False
     )
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # module.check_mode = False
     if module.check_mode:
+        result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
 
     token = auth.get_access_token()
+    
+    api_base_host = os.getenv("API_BASE_HOST") 
+    if api_base_host is None:
+        result['env_url_error'] = 'cannot find API_BASE_HOST in .env file, using default url values instead'
+        api_base_host = API_BASE_HOST
     configuration = rhoas_kafka_mgmt_sdk.Configuration(
-        host = SSO_BASE_HOST,
+        host = api_base_host,
     )
     
     configuration.access_token = token["access_token"]
     
-    def check_kafka_in_ready_state(kafka_mgmt_api_instance, retries = 10, backoff_in_seconds = 6):
+    def check_kafka_in_ready_state(kafka_mgmt_api_instance, retries = 10, backoff_in_seconds = 10):
         attempt = 0
         # Check for kafka_admin_url to be used to create topic
         while result['kafka_state'] != "ready":
@@ -179,7 +181,6 @@ def run_module():
                 # Enter a context with an instance of the API client
                     kafka_id = result['kafka_id'] # str | The ID of record
 
-                    # example passing only required values which don't have defaults set
                     try:
                         kafka_mgmt_api_response = kafka_mgmt_api_instance.get_kafka_by_id(kafka_id)
                         kafka_mgmt_api_response
@@ -190,9 +191,11 @@ def run_module():
                     except rhoas_kafka_mgmt_sdk.ApiException as e:
                         rb = json.loads(e.body)
                         module.fail_json(msg=f'Failed to create new kafka instance with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+                    except Exception as e:
+                        module.fail_json(msg=f'Failed to create new kafka instance with error: {e}')
             except:
                 if attempt == retries:
-                    raise
+                    raise Exception("Failed to establish kafka instance is in a `ready state` after 10 retries")
                 sleep = (backoff_in_seconds * attempt)
                 time.sleep(sleep)
                 attempt += 1

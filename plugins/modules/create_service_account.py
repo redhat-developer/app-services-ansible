@@ -3,8 +3,10 @@
 
 # Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
+import os
 
 from ..module_utils.constants.constants import SSO_BASE_HOST
+from dotenv import load_dotenv
 
 DOCUMENTATION = r'''
 ---
@@ -78,6 +80,9 @@ import auth.rhoas_auth as auth
 from rhoas_service_accounts_mgmt_sdk.api import service_accounts_api
 from rhoas_service_accounts_mgmt_sdk.model.service_account_create_request_data import ServiceAccountCreateRequestData
 
+load_dotenv(".env")
+
+
 def run_module():
     module_args = dict(
         name=dict(type='str', required=True),
@@ -102,9 +107,14 @@ def run_module():
         module.exit_json(**result)
 
     token = auth.get_access_token()
-    
+   
+    sso_base_host = os.getenv("SSO_BASE_HOST") 
+    if sso_base_host is None:
+        result['message'] = 'cannot find SSO_BASE_HOST in .env file'
+        sso_base_host = SSO_BASE_HOST
+   
     configuration = rhoas_service_accounts_mgmt_sdk.Configuration(
-        host = SSO_BASE_HOST,
+            host = sso_base_host,    
     )
     configuration.access_token = token["access_token"]
 

@@ -25,7 +25,21 @@ where create_kafka.json contains input arguments. For example:
     }
 }
 ```
+
+## Using collection
+
+All modules require an 'OFFLINE_TOKEN' environment variable to be set with a valid token. This token is used to authenticate the user. The token is an OpenShift Cluster Manager API Token and can be found [here](https://console.redhat.com/openshift/token)
+
+Two further environment variables are used for the the collection to work. These environment variables can be placed in a `.env` file. 
+They are:
+
+- `API_BASE_HOST` - The base host for the API. This is the base URL for the API. For example, `https://api.openshift.com`
+- `SSO_BASE_HOST` - The base host for the SSO. This is the base URL for the SSO. For example, `https://sso.redhat.com/auth/realms/redhat-external`
+
+If neither of these environment variables are set, the collection will default to the URLs as noted in the examples.
+
 ## Testing with Ansible Playbooks
+
 A further way to run / test the code locally is with the use of an [Ansible Playbook](https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_general.html#verifying-your-module-code-in-a-playbook). 
 To do so the following steps are required:
 
@@ -63,4 +77,7 @@ The `create_kafka` command in the task needs to be the **Fully Qualified Name** 
         name: kafka-name
 ...
 ```
+
 Just remember to add the module back to the collection when you are done with the testing againsta a playbook.
+
+

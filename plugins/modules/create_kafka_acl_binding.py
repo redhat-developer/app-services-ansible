@@ -4,8 +4,10 @@
 # Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
 import json
+import os
 
 from ..module_utils.constants.constants import API_BASE_HOST
+from dotenv import load_dotenv
 
 DOCUMENTATION = r'''
 ---
@@ -64,7 +66,7 @@ EXAMPLES = r'''
     redhat.rhoask.create_kafka_acl_binding:
       kafka_id: "{{ kafka_req_resp.kafka_id }}"
       principal: " {{ srvce_acc_resp_obj['client_id'] }}"
-      resource_name: "bindacl"
+      resource_name: "topic_name"
       resource_type: "Topic"
       pattern_type: "PREFIXED"
       operation_type: "all"
@@ -92,13 +94,16 @@ kafka_admin_url:
     description: The Kafka Admin URL. This is the URL of the Kafka instance to connect to.
     type: str
     returned: If no kafka_admin_url is passed but the Kafka ID is passed, when the module is successful.
+env_url_error:
+    description: The error message returned if no environment variable is passed for the BASE_HOST URL.
+    type: str
+    returned: when the module uses default url instead of passed environment variable
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 import rhoas_kafka_mgmt_sdk
 from rhoas_kafka_mgmt_sdk.api import default_api
 import auth.rhoas_auth as auth
-
 import rhoas_kafka_instance_sdk
 from rhoas_kafka_instance_sdk.api import acls_api
 from rhoas_kafka_instance_sdk.model.acl_binding import AclBinding
@@ -106,10 +111,9 @@ from rhoas_kafka_instance_sdk.model.acl_resource_type import AclResourceType as 
 from rhoas_kafka_instance_sdk.model.acl_pattern_type import AclPatternType as apt
 from rhoas_kafka_instance_sdk.model.acl_operation import AclOperation as aot
 from rhoas_kafka_instance_sdk.model.acl_permission_type import AclPermissionType as apert
-
-
 import rhoas_kafka_instance_sdk
 
+load_dotenv(".env")
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -124,38 +128,31 @@ def run_module():
         permission_type = dict(type='str', required = True),
     )
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # changed is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
         original_message='',
         message='',
         kafka_admin_url='',
         kafka_admin_resp_obj='',
-        
+        env_url_error='',
     )
 
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
+        
         supports_check_mode=False
     )
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # module.check_mode = False
     if module.check_mode:
+        result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
 
+    api_base_host = os.getenv("API_BASE_HOST") 
+    if api_base_host is None:
+        result['env_url_error'] = 'cannot find API_BASE_HOST in .env file, using default url values instead'
+        api_base_host = API_BASE_HOST
     kafka_mgmt_config = rhoas_kafka_mgmt_sdk.Configuration(
-        host = API_BASE_HOST,
+        host = api_base_host,
     )
  
     token = auth.get_access_token()
@@ -207,6 +204,8 @@ def run_module():
             op = aot(module.params['operation_type'].upper())
         if module.params['permission_type'] is not None:
             per = apert(module.params['permission_type'].upper())
+        if module.params['principal'].startswith('user:') is True:
+            prncpl = module.params['principal'].title().lstrip(" ")
         if module.params['principal'].startswith('User:') is False:
             prncpl = f'User:{module.params["principal"].lstrip(" ")}'
             
@@ -225,8 +224,6 @@ def run_module():
                 result['message'] = "ACL Binding Created"
             result['changed'] = True
 
-            # in the event of a successful module execution, you will want to
-            # simple AnsibleModule.exit_json(), passing the key/value results
             module.exit_json(**result)
         except rhoas_kafka_instance_sdk.ApiException as e:
             rb = json.loads(e.body)
