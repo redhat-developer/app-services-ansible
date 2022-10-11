@@ -13,7 +13,7 @@ DOCUMENTATION = r'''
 ---
 module: create_kafka_acl_binding
 
-short_description: Create Access Control Lists (ACLs) for Red Hat OpenShift Streams for Apache Kafka Instance
+short_description: Create Access Control Lists (ACLs) for Red Hat OpenShift Streams for Apache Kafka Instance.
 
 version_added: "0.1.1-alpha"
 
@@ -25,7 +25,7 @@ options:
         required: true
         type: str
     kafka_id:
-        description: ID of the Kafka instance
+        description: ID of the Kafka instance.
         required: false 
         type: str
     kafka_admin_url:
@@ -52,6 +52,10 @@ options:
         description: Permission type of ACL, full list of possible values can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclPermissionType.md
         required: true
         type: str
+    openshift_offline_token:
+        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        required: false
+        type: str
  
 extends_documentation_fragment:
     - dimakis.rhosak_test.rhosak_doc_fragment
@@ -71,6 +75,7 @@ EXAMPLES = r'''
       pattern_type: "PREFIXED"
       operation_type: "all"
       permission_type: "allow"
+      openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
       
 '''
 
@@ -82,7 +87,7 @@ original_message:
     returned: always
     sample: can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclBinding.md
 message:
-    description: "ACL Binding Created"
+    description: "ACL Binding Created".
     type: dict
     returned: in success case
 kafka_req_resp:
@@ -126,6 +131,7 @@ def run_module():
         pattern_type = dict(type='str', required = True), 
         operation_type = dict(type='str', required = True),
         permission_type = dict(type='str', required = True),
+        openshift_offline_token=dict(type='str', required=False),
     )
 
     result = dict(
@@ -139,13 +145,17 @@ def run_module():
 
     module = AnsibleModule(
         argument_spec=module_args,
-        
         supports_check_mode=False
     )
 
     if module.check_mode:
         result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
+        
+    if module.params['openshift_offline_token'] is None:
+        token = auth.get_access_token(offline_token=None)
+    else:
+        token = auth.get_access_token(module.params['openshift_offline_token'])
 
     api_base_host = os.getenv("API_BASE_HOST") 
     if api_base_host is None:
@@ -155,7 +165,6 @@ def run_module():
         host = api_base_host,
     )
  
-    token = auth.get_access_token()
     kafka_mgmt_config.access_token = token["access_token"]
     
     configuration = rhoas_kafka_instance_sdk.Configuration()
@@ -180,9 +189,9 @@ def run_module():
                     configuration.host = result['kafka_admin_url']
                 except rhoas_kafka_mgmt_sdk.ApiException as e:
                     rb = json.loads(e.body)
-                    module.fail_json(msg=f'Failed to create Access Control List binding with API exception code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+                    module.fail_json(msg=f'Failed to create Access Control List binding with API exception code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.', **result)
                 except Exception as e:
-                    module.fail_json(msg=f'Failed to create Access Control List binding with exception: {e}')
+                    module.fail_json(msg=f'Failed to create Access Control List binding with exception: {e}', **result)
                 
     
     # Check for kafka_admin_url to be used to create topic
@@ -205,9 +214,13 @@ def run_module():
         if module.params['permission_type'] is not None:
             per = apert(module.params['permission_type'].upper())
         if module.params['principal'].startswith('user:') is True:
-            prncpl = module.params['principal'].title().lstrip(" ")
-        if module.params['principal'].startswith('User:') is False:
-            prncpl = f'User:{module.params["principal"].lstrip(" ")}'
+            prncpl = module.params['principal'].title().replace(" ", "")
+            result['message'] = prncpl
+        elif module.params['principal'].startswith('User:') is True:
+            prncpl = module.params['principal'].replace(" ", "")
+            result['message'] = prncpl
+        else:
+            prncpl = f'User:{module.params["principal"].replace(" ", "")}'
             
         acl_binding = AclBinding( 
             resource_type = rt, 
@@ -227,9 +240,9 @@ def run_module():
             module.exit_json(**result)
         except rhoas_kafka_instance_sdk.ApiException as e:
             rb = json.loads(e.body)
-            module.fail_json(msg=f'Failed to create Access Control List binding with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+            module.fail_json(msg=f'Failed to create Access Control List binding with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.', **result)
         except Exception as e:
-            module.fail_json(msg=f'Failed to create Access Control List binding with error: `{e}`.')
+            module.fail_json(msg=f'Failed to create Access Control List binding with error: `{e}`.', **result)
 
 
 def main():
