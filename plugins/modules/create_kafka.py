@@ -14,55 +14,55 @@ DOCUMENTATION = r'''
 ---
 module: create_kafka
 
-short_description: Create Red Hat OpenShift Streams for Apache Kafka Instance
+short_description: Create Red Hat OpenShift Streams for Apache Kafka Instance.
 
-# If this is part of a collection, you need to use semantic versioning,
-# i.e. the version is of the form "2.5.0" and not "2.4".
 version_added: "0.1.1-aplha"
 
-description: Create Red Hat OpenShift Streams for Apache Kafka Instance
+description: Create Red Hat OpenShift Streams for Apache Kafka Instance.
 
 options:
     name:
-        description: Name of the Kafka instance
+        description: Name of the Kafka instance.
         required: true
         type: str
     cloud_provider:
-        description: Cloud provider for the Kafka instance
+        description: Cloud provider for the Kafka instance.
         required: true 
         type: str
     region:
-        description: Region of the Kafka instance
+        description: Region that the Kafka instance is to be situated in.
         required: true
         type: str
     reauthentication_enabled:
-        description: Reauthentication enabled for the Kafka instance
+        description: Reauthentication enabled for the Kafka instance.
         required: false
         type: bool
         default: true
     plan:
-        description: Plan for the Kafka instance
+        description: Plan for the Kafka instance.
         required: true
         type: str
     billing_cloud_account_id:
-        description: Billing cloud account id for the Kafka instance
+        description: Billing cloud account id for the Kafka instance.
         required: false 
         type: str
     marketplace:
-        description: Marketplace for the Kafka instance
+        description: Marketplace for the Kafka instance.
         required: false 
         type: str
     billing_model:
-        description: Billing model for the Kafka instance
+        description: Billing model for the Kafka instance.
         required: true 
         type: str
     instance_type:
-        description: Instance type for the Kafka instance
+        description: Instance type for the Kafka instance.
+        required: false
+        type: str
+    openshift_offline_token:
+        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
         required: false
         type: str
  
-# Specify this value according to your collection
-# in format of namespace.collection.doc_fragment_name
 extends_documentation_fragment:
     - dimakis.rhosak_test.rhosak_doc_fragment
     
@@ -81,6 +81,7 @@ EXAMPLES = r'''
       region: "us-east-1"
       plan: "developer.x1"
       billing_cloud_account_id: "123456789"
+      openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
     register:
       kafka_req_resp 
 '''
@@ -96,27 +97,27 @@ message:
     description: The output error / exception message that is returned in the case the module generates an error / exception.
     type: dict
     returned: in case of error / exception
-kafka_req_resp:
-    description: The response object from the Kafka_mgmt API.
+
+    description: The response object from the Kafka Management API.
     sample: As can be found in the Red Hat App-Services Python SDK https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_mgmt_sdk/docs/KafkaRequest.md\#kafkarequest
     type: dict
-    returned: when the module is successful
+    returned: If the module is successful.
 kafka_admin_url:
     description: The admin url for the Kafka instance.
     type: str
-    returned: when the module is successful
+    returned: If the module is successful.
 kafka_id:
     description: The id of the Kafka instance.
     type: str
-    returned: when the module is successful
+    returned: If the module is successful.
 kafka_state:
     description: The state of the Kafka instance.
     type: str
-    returned: when the module is successful
+    returned: If the module is successful.
 env_url_error:
     description: The error message returned if no environment variable is passed for the BASE_HOST URL.
     type: str
-    returned: when the module uses default url instead of passed environment variable
+    returned: If the module uses default url instead of passed environment variable.
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -139,17 +140,18 @@ def run_module():
         marketplace=dict(type='str', required=False),
         billing_model=dict(type='str', required=True),
         instance_type=dict(type='str', required=False),
+        openshift_offline_token=dict(type='str', required=False),
     )
 
     result = dict(
         changed=False,
         original_message='',
         message='',
-        kafka_req_resp=dict,
         kafka_id='',
         kafka_admin_url='',
         kafka_state='',
         env_url_error='',
+        env_var=''
     )
 
     module = AnsibleModule(
@@ -161,8 +163,13 @@ def run_module():
         result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
 
-    token = auth.get_access_token()
-    
+    if module.params['openshift_offline_token'] is None or module.params['openshift_offline_token'] == '':
+        result['env_var'] = 'using token from args'
+        token = auth.get_access_token(offline_token=None)
+    else:
+        result['env_var'] = f'using environmental variable.'
+        token = auth.get_access_token(module.params['openshift_offline_token'])
+   
     api_base_host = os.getenv("API_BASE_HOST") 
     if api_base_host is None:
         result['env_url_error'] = 'cannot find API_BASE_HOST in .env file, using default url values instead'
@@ -173,7 +180,7 @@ def run_module():
     
     configuration.access_token = token["access_token"]
     
-    def check_kafka_in_ready_state(kafka_mgmt_api_instance, retries = 10, backoff_in_seconds = 10):
+    def check_kafka_in_ready_state(kafka_mgmt_api_instance, retries = 10, backoff_in_seconds = 15):
         attempt = 0
         # Check for kafka_admin_url to be used to create topic
         while result['kafka_state'] != "ready":
@@ -183,7 +190,7 @@ def run_module():
 
                     try:
                         kafka_mgmt_api_response = kafka_mgmt_api_instance.get_kafka_by_id(kafka_id)
-                        kafka_mgmt_api_response
+                        # kafka_mgmt_api_response.get(2000)
                         result['kafka_admin_url'] = kafka_mgmt_api_response['admin_api_server_url']
                         result['kafka_state'] = kafka_mgmt_api_response['status']
                         result['kafka_admin_resp_obj'] = kafka_mgmt_api_response.to_dict()
@@ -191,11 +198,9 @@ def run_module():
                     except rhoas_kafka_mgmt_sdk.ApiException as e:
                         rb = json.loads(e.body)
                         module.fail_json(msg=f'Failed to create new kafka instance with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
-                    except Exception as e:
-                        module.fail_json(msg=f'Failed to create new kafka instance with error: {e}')
             except:
                 if attempt == retries:
-                    raise Exception("Failed to establish kafka instance is in a `ready state` after 10 retries")
+                    raise Exception ("Failed to establish that the new Kafka instance is in a 'ready state', Kafka may be provisioning. The RHOAS CLI can be used to check the status of the instance.")
                 sleep = (backoff_in_seconds * attempt)
                 time.sleep(sleep)
                 attempt += 1
@@ -216,12 +221,11 @@ def run_module():
             billing_model=module.params['billing_model'],
         ) 
         try:
-            result['original_message'] = module.params
             api_response = api_instance.create_kafka(_async, kafka_request_payload, async_req=True)
-            kafka_req_resp = api_response.get(2000)
+            kafka_req_resp = api_response.get(20000)
 
             if kafka_req_resp['status'] == 'accepted' or kafka_req_resp['status'] == 'ready' or kafka_req_resp['status'] == 'provisioning':
-                result['kafka_req_resp'] = kafka_req_resp.to_dict()
+                result['original_message'] = kafka_req_resp.to_dict()
                 result['kafka_id'] = kafka_req_resp['id']
             check_kafka_in_ready_state(api_instance)
             
