@@ -29,6 +29,10 @@ options:
         description: Description of the service account
         required: true
         type: str
+    openshift_offline_token:
+        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        required: false
+        type: str
  
 # Specify this value according to your collection
 # in format of namespace.collection.doc_fragment_name
@@ -45,6 +49,7 @@ EXAMPLES = r'''
     create_service_account:
       name: "service_account_name"
       description: "This is a description of the service account"
+      openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
     register:
       srvce_acc_resp_obj
 '''
@@ -58,20 +63,24 @@ original_message:
 message:
     description: The output error / exception message that is returned in the case the module generates an error / exception.
     type: dict
-    returned: in case of error / exception
+    returned: In case of error / exception.
 srvce_acc_resp_obj: 
-    description: The service account response object
+    description: The service account response object.
     type: dict
-    returned: when service account is created successfully
+    returned: If service account is created successfully.
     sample: Client ID and Client Secret of the service account. 
 client_id:
-    description: The client id of the service account
+    description: The client id of the service account.
     type: str
-    returned: when service account is created successfully
+    returned: If service account is created successfully.
 client_secret:
-    description: The client secret of the service account
+    description: The client secret of the service account.
     type: str
-    returned: when service account is created successfully
+    returned: If service account is created successfully.
+env_url_error:
+    description: The error message returned if no environment variable is passed for the BASE_HOST URL.
+    type: str
+    returned: If the module uses default url instead of passed environment variable.
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -82,11 +91,11 @@ from rhoas_service_accounts_mgmt_sdk.model.service_account_create_request_data i
 
 load_dotenv(".env")
 
-
 def run_module():
     module_args = dict(
         name=dict(type='str', required=True),
         description=dict(type='str', required=True),
+        openshift_offline_token=dict(type='str', required=False),
     )
 
     result = dict(
@@ -96,6 +105,7 @@ def run_module():
         srvce_acc_resp_obj=dict,
         client_id='',
         client_secret='',
+        env_url_error='',
     )
 
     module = AnsibleModule(
@@ -104,9 +114,13 @@ def run_module():
     )
 
     if module.check_mode:
+        result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
 
-    token = auth.get_access_token()
+    if module.params['openshift_offline_token'] is None or module.params['openshift_offline_token'] == '':
+        token = auth.get_access_token(offline_token=None)
+    else: 
+        token = auth.get_access_token(module.params['openshift_offline_token'])
    
     sso_base_host = os.getenv("SSO_BASE_HOST") 
     if sso_base_host is None:
@@ -116,9 +130,9 @@ def run_module():
     configuration = rhoas_service_accounts_mgmt_sdk.Configuration(
             host = sso_base_host,    
     )
+    
     configuration.access_token = token["access_token"]
 
-    
     with rhoas_service_accounts_mgmt_sdk.ApiClient(configuration) as api_client:
         # Create an instance of the API class
         api_instance = service_accounts_api.ServiceAccountsApi(api_client)
@@ -148,7 +162,6 @@ def run_module():
 
 def main():
     run_module()
-
 
 if __name__ == '__main__':
     main()
