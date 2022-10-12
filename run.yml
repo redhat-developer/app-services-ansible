@@ -6,7 +6,7 @@
   tasks:
   - name: Create kafka
     rhoas.rhoas.create_kafka:
-      name: "unique_kafka_name"
+      name: "unique-kafka-name"
       cloud_provider: "aws"
       region: "us-east-1"
       plan: "developer.x1"
