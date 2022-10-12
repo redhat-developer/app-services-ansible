@@ -64,7 +64,7 @@ options:
         type: str
  
 extends_documentation_fragment:
-    - dimakis.rhosak_test.rhosak_doc_fragment
+    - rhoas.rhoas.rhoas_doc_fragment
     
 author:
     - Red Hat Developer

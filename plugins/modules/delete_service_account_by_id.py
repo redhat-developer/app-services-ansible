@@ -15,7 +15,7 @@ module: delete_service_account_by_id
 
 short_description: Delete a Service Account for use with Red Hat Openshift Application Services.
 
-version_added: "0.1.0"
+version_added: "0.1.0-alpha"
 
 description: Delete a Service Account for use with Red Hat Openshift Application Services.
 
@@ -30,7 +30,7 @@ options:
         type: str
         
 extends_documentation_fragment:
-    - dimakis.rhoask_test.rhosak_doc_fragment
+    - rhoas.rhoas.rhoas_doc_fragment
 
 author:
     - Red Hat Developer

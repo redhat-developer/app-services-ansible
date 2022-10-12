@@ -15,7 +15,7 @@ module: delete_kafka_topic
 
 short_description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
-version_added: "0.1.0"
+version_added: "0.1.0-alpha"
 
 description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
@@ -32,6 +32,9 @@ options:
         description: Admin URL of the Kafka instance. This URL is used to communicate with the Kafka instance.
         required: false
         type: str
+ 
+extends_documentation_fragment:
+    - rhoas.rhoas.rhoas_doc_fragment
  
 author:
     - Red Hat Developer

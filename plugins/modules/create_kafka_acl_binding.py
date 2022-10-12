@@ -15,7 +15,7 @@ module: create_kafka_acl_binding
 
 short_description: Create Access Control Lists (ACLs) for Red Hat OpenShift Streams for Apache Kafka Instance.
 
-version_added: "0.1.1-alpha"
+version_added: "0.1.0-alpha"
 
 description: Create Access Control Lists (ACLs) Red Hat OpenShift Streams for Apache Kafka Instance. More details can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclBinding.md
 
@@ -58,7 +58,7 @@ options:
         type: str
  
 extends_documentation_fragment:
-    - dimakis.rhosak_test.rhosak_doc_fragment
+    - rhoas.rhoas.rhoas_doc_fragment
     
 author:
     - Red Hat Developer
