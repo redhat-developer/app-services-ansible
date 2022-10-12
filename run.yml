@@ -5,7 +5,7 @@
   connection: local
   tasks:
   - name: Create kafka
-    redhat_developer.rhoas.create_kafka:
+    rhoas.rhoas.create_kafka:
       name: "unique_kafka_name"
       cloud_provider: "aws"
       region: "us-east-1"
@@ -18,14 +18,14 @@
     debug:
       msg: "{{ kafka_req_resp_obj['kafka_id'] }}"
   - name: Create Service Account
-    redhat_developer.rhoas.create_service_account:
+    rhoas.rhoas.create_service_account:
       name: "jeeves"
       description: "jeeves service account"
     no_log: True
     register:
       srvce_acc_resp_obj
   - name: Create kafka ACL Service Binding
-    redhat_developer.rhoas.create_kafka_acl_binding:
+    rhoas.rhoas.create_kafka_acl_binding:
       # dynamically get the kafka id from the kafka_req_resp
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
@@ -46,7 +46,7 @@
       # passing the kafka_admin_url from the kafka_req_resp_obj is more efficient as one less API call is made
       # kafka_admin_url: "https://kafka-admin.dev.struttin.com"
   - name: Create Kafka Topic
-    redhat_developer.rhoas.create_kafka_topic:
+    rhoas.rhoas.create_kafka_topic:
       topic_name: "topic_one"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
@@ -59,7 +59,7 @@
     register:
       kafka_topic_resp_obj
   - name: Create Kafka Topic2
-    redhat_developer.rhoas.create_kafka_topic:
+    rhoas.rhoas.create_kafka_topic:
       topic_name: "topic_two"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
@@ -69,20 +69,20 @@
     register:
       kafka_topic_resp_obj2
   - name: Delete kafka topic_one
-    redhat_developer.rhoas.delete_kafka_topic:
+    rhoas.rhoas.delete_kafka_topic:
       topic_name: "topic_one"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
 
       # to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
   - name: Delete kafka topic_two
-    redhat_developer.rhoas.delete_kafka_topic:
+    rhoas.rhoas.delete_kafka_topic:
       topic_name: "topic_two"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
   - name: Delete Service Account
-    redhat_developer.rhoas.delete_service_account_by_id:
+    rhoas.rhoas.delete_service_account_by_id:
       # service_account_id: "service_account_id"
       service_account_id: "{{ srvce_acc_resp_obj['id'] }}"
     # no_log: True
