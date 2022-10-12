@@ -14,9 +14,7 @@ module: create_service_account
 
 short_description: Create a Service Account for use with Red Hat Openshift Application Services 
 
-# If this is part of a collection, you need to use semantic versioning,
-# i.e. the version is of the form "2.5.0" and not "2.4".
-version_added: "0.1.1-aplha"
+version_added: "0.1.0-alpha"
 
 description: Create a Service Account for use with Red Hat Openshift Application Services 
 
@@ -34,10 +32,8 @@ options:
         required: false
         type: str
  
-# Specify this value according to your collection
-# in format of namespace.collection.doc_fragment_name
 extends_documentation_fragment:
-    - dimakis.rhosak_test.rhosak_doc_fragment
+    - rhoas.rhoas.rhoas_doc_fragment
 
 author:
     - Red Hat Developer

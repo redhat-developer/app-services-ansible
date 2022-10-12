@@ -15,7 +15,7 @@ module: create_kafka_topic
 
 short_description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
-version_added: "0.1.1-aplha"
+version_added: "0.1.0-alpha"
 
 description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
@@ -54,7 +54,7 @@ options:
         type: str
  
 extends_documentation_fragment:
-    - dimakis.rhosak_test.rhosak_doc_fragment
+    - rhoas.rhoas.rhoas_doc_fragment
     
 author:
     - Red Hat Developer
