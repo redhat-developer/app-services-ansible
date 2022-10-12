@@ -1,6 +1,8 @@
 python-keycloak==2.5.0
 ansible-core==2.13.3
 rhoas-sdks
+ansible
+
 
 requests==2.25.1 
 urllib3==1.26.5

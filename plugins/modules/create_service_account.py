@@ -3,7 +3,10 @@
 
 # Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+import os
+
+from ..module_utils.constants.constants import SSO_BASE_HOST
+from dotenv import load_dotenv
 
 DOCUMENTATION = r'''
 ---
@@ -26,6 +29,10 @@ options:
         description: Description of the service account
         required: true
         type: str
+    openshift_offline_token:
+        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        required: false
+        type: str
  
 # Specify this value according to your collection
 # in format of namespace.collection.doc_fragment_name
@@ -42,6 +49,7 @@ EXAMPLES = r'''
     create_service_account:
       name: "service_account_name"
       description: "This is a description of the service account"
+      openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
     register:
       srvce_acc_resp_obj
 '''
@@ -55,20 +63,24 @@ original_message:
 message:
     description: The output error / exception message that is returned in the case the module generates an error / exception.
     type: dict
-    returned: in case of error / exception
+    returned: In case of error / exception.
 srvce_acc_resp_obj: 
-    description: The service account response object
+    description: The service account response object.
     type: dict
-    returned: when service account is created successfully
+    returned: If service account is created successfully.
     sample: Client ID and Client Secret of the service account. 
 client_id:
-    description: The client id of the service account
+    description: The client id of the service account.
     type: str
-    returned: when service account is created successfully
+    returned: If service account is created successfully.
 client_secret:
-    description: The client secret of the service account
+    description: The client secret of the service account.
     type: str
-    returned: when service account is created successfully
+    returned: If service account is created successfully.
+env_url_error:
+    description: The error message returned if no environment variable is passed for the BASE_HOST URL.
+    type: str
+    returned: If the module uses default url instead of passed environment variable.
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -77,18 +89,15 @@ import auth.rhoas_auth as auth
 from rhoas_service_accounts_mgmt_sdk.api import service_accounts_api
 from rhoas_service_accounts_mgmt_sdk.model.service_account_create_request_data import ServiceAccountCreateRequestData
 
+load_dotenv(".env")
+
 def run_module():
-    # define available arguments/parameters a user can pass to the module
     module_args = dict(
         name=dict(type='str', required=True),
         description=dict(type='str', required=True),
+        openshift_offline_token=dict(type='str', required=False),
     )
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # changed is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
         original_message='',
@@ -96,33 +105,34 @@ def run_module():
         srvce_acc_resp_obj=dict,
         client_id='',
         client_secret='',
+        env_url_error='',
     )
 
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # module.check_mode = False
     if module.check_mode:
+        result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
 
-    token = auth.get_access_token()
-    
+    if module.params['openshift_offline_token'] is None or module.params['openshift_offline_token'] == '':
+        token = auth.get_access_token(offline_token=None)
+    else: 
+        token = auth.get_access_token(module.params['openshift_offline_token'])
+   
+    sso_base_host = os.getenv("SSO_BASE_HOST") 
+    if sso_base_host is None:
+        result['message'] = 'cannot find SSO_BASE_HOST in .env file'
+        sso_base_host = SSO_BASE_HOST
+   
     configuration = rhoas_service_accounts_mgmt_sdk.Configuration(
-        host = "https://sso.redhat.com/auth/realms/redhat-external",
+            host = sso_base_host,    
     )
+    
     configuration.access_token = token["access_token"]
 
-    
-    # Enter a context with an instance of the API client
     with rhoas_service_accounts_mgmt_sdk.ApiClient(configuration) as api_client:
         # Create an instance of the API class
         api_instance = service_accounts_api.ServiceAccountsApi(api_client)
@@ -142,17 +152,16 @@ def run_module():
             
             result['changed'] = True
 
-            # in the event of a successful module execution, you will want to
-            # simple AnsibleModule.exit_json(), passing the key/value results
             module.exit_json(**result)
         except rhoas_service_accounts_mgmt_sdk.ApiException as e:
-            print("Exception when calling ServiceAccountsApi->create_service_account: %s\n" % e)
+            result['message'] = e.body
+            module.fail_json(msg='Failed to create kafka instance, API exception', **result)
+        except Exception as e:
             result['message'] = e
-            module.fail_json(msg='Failed to create kafka instance', **result)
+            module.fail_json(msg='Failed to create kafka instance, with general exception', **result)   
 
 def main():
     run_module()
-
 
 if __name__ == '__main__':
     main()

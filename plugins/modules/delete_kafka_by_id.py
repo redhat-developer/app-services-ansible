@@ -2,22 +2,29 @@
 
 
 from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+import os
+
+from ..module_utils.constants.constants import API_BASE_HOST
+from dotenv import load_dotenv
 
 DOCUMENTATION = r'''
 ---
 module: delete_kafka_by_id 
 
-short_description: This module deletes a Red Hat OpenShift Streams for Apache Kafka Instance by ID
+short_description: This module deletes a Red Hat OpenShift Streams for Apache Kafka Instance by ID.
 
 version_added: "0.1.0-alpha"
 
-short_description: This module deletes a Red Hat OpenShift Streams for Apache Kafka Instance by ID
+short_description: This module deletes a Red Hat OpenShift Streams for Apache Kafka Instance by ID.
 
 options:
     kakfa_id:
-        description: ID of the instance to be deleted
+        description: ID of the instance to be deleted.
         required: true
+        type: str
+    openshift_offline_token:
+        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        required: false
         type: str
  
 extends_documentation_fragment:
@@ -37,11 +44,15 @@ RETURN = r'''
 original_message:
     description: The original kafka ID set for deletion that was passed in.
     type: dict
-    returned: in case of successful deletion 
+    returned: In case of successful deletion.
 message:
     description: The output error / exception message that is returned in the case the module generates an error / exception.
     type: dict
-    returned: in case of error / exception
+    returned: In case of error / exception.
+env_url_error:
+    description: The error message returned if no environment variable is passed for the BASE_HOST URL.
+    type: str
+    returned: If the module uses default url instead of passed environment variable.
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -49,15 +60,19 @@ import rhoas_kafka_mgmt_sdk
 from rhoas_kafka_mgmt_sdk.api import default_api
 import auth.rhoas_auth as auth
 
+load_dotenv(".env")
+
 def run_module():
     module_args = dict(
         kafka_id=dict(type='str', required=True),
+        openshift_offline_token=dict(type='str', required=False),
     )
 
     result = dict(
         changed=False,
         original_message='',
         message='',
+        env_var_error='',
     )
 
     module = AnsibleModule(
@@ -66,12 +81,20 @@ def run_module():
     )
 
     if module.check_mode:
+        result['message'] = 'Check mode is not supported.'
         module.exit_json(**result)
 
-    token = auth.get_access_token()
+    if module.params['openshift_offline_token'] is None or module.params['openshift_offline_token'] == '':
+        token = auth.get_access_token(offline_token=None)
+    else:
+        token = auth.get_access_token(module.params['openshift_offline_token'])
     
+    api_base_host = os.getenv("API_BASE_HOST") 
+    if api_base_host is None:
+        result['env_url_error'] = 'cannot find API_BASE_HOST in .env file, using default url values instead'
+        api_base_host = API_BASE_HOST
     configuration = rhoas_kafka_mgmt_sdk.Configuration(
-        host = "https://api.openshift.com",
+        host = api_base_host
     )
     
     configuration.access_token = token["access_token"]

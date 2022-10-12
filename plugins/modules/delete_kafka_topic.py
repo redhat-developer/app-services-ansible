@@ -4,29 +4,32 @@
 # Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
 import json
+import os
 
 from ..module_utils.constants.constants import API_BASE_HOST
+from dotenv import load_dotenv
+
 DOCUMENTATION = r'''
 ---
 module: delete_kafka_topic
 
-short_description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance
+short_description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
 version_added: "0.1.0"
 
-description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance
+description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
 options:
     topic_name:
-        description: Name of the Kafka instance topic
+        description: Name of the Kafka instance topic.
         required: true
         type: str
     kafka_id:
-        description: ID of the Kafka instance
+        description: ID of the Kafka instance.
         required: true
         type: str
     kafka_admin_url: 
-        description: Admin URL of the Kafka instance
+        description: Admin URL of the Kafka instance. This URL is used to communicate with the Kafka instance.
         required: false
         type: str
  
@@ -40,6 +43,7 @@ EXAMPLES = r'''
     delete_kafka_topic:
       name: "KAFKA_TOPIC_NAME"
       kafka_id: "KAFKA_ID"
+      openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
 '''
 
 RETURN = r'''
@@ -47,19 +51,23 @@ RETURN = r'''
 original_message:
     description: The original params that were passed in.
     type: dict 
-    returned: always in case of successful execution
+    returned: In the case of successful execution.
 message:
     description: A message detailing topic to be deleted.
     type: str
-    returned: always in case of successful execution
+    returned: In the case of successful execution.
 kafka_admin_resp_obj:
-    description: The response object from the Kafka Admin REST API which details the Kafka instance
+    description: The response object from the Kafka Admin REST API which details the Kafka instance.
     type: dict
-    returned: if no Kafka Admin URL is provided in the module parameters and the Kafka Admin URL is retrieved from the Kafka Admin REST API
+    returned: If no Kafka Admin URL is provided in the module parameters and the Kafka Admin URL is retrieved from the Kafka Admin REST API.
 kafka_admin_url:
-    description: The Kafka Admin URL of the Kafka instance
+    description: The Kafka Admin URL of the Kafka instance.
     type: str
-    returned: if no Kafka Admin URL is provided in the module parameters and the Kafka Admin URL is retrieved from the Kafka Admin REST API
+    returned: If no Kafka Admin URL is provided in the module parameters and the Kafka Admin URL is retrieved from the Kafka Admin REST API.
+env_url_error:
+    description: The error message returned if no environment variable is passed for the BASE_HOST URL.
+    type: str
+    returned: If the module uses default url instead of passed environment variable.
 '''
 
 from ansible.module_utils.basic import AnsibleModule
@@ -70,15 +78,16 @@ import rhoas_kafka_instance_sdk
 import rhoas_kafka_instance_sdk
 from rhoas_kafka_instance_sdk.api import topics_api
 
-configuration = rhoas_kafka_instance_sdk.Configuration()
+load_dotenv(".env")
 
-token = auth.get_access_token()
+configuration = rhoas_kafka_instance_sdk.Configuration()
 
 def run_module():
     module_args = dict(
         topic_name=dict(type='str', required=True),
         kafka_id=dict(type='str', required=True),
         kafka_admin_url=dict(type='str', required=False),
+        openshift_offline_token=dict(type='str', required=False),
     )
 
     result = dict(
@@ -86,7 +95,8 @@ def run_module():
         original_message='',
         message='',
         kafka_admin_resp_obj=dict,
-        kafka_admin_url=''
+        kafka_admin_url='',
+        env_var=''
     )
 
     module = AnsibleModule(
@@ -95,13 +105,22 @@ def run_module():
     )
 
     if module.check_mode:
+        result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
 
+    if module.params['openshift_offline_token'] is None or module.params['openshift_offline_token'] == '':
+        token = auth.get_access_token(offline_token=None)
+    else:
+        token = auth.get_access_token(module.params['openshift_offline_token'])
+        
+    api_base_host = os.getenv("API_BASE_HOST") 
+    if api_base_host is None:
+        result['env_url_error'] = 'cannot find API_BASE_HOST in .env file, using default url values instead'
+        api_base_host = API_BASE_HOST
     kafka_mgmt_config = rhoas_kafka_mgmt_sdk.Configuration(
-        host = API_BASE_HOST,
+        host = api_base_host,
     )
  
-    token = auth.get_access_token()
     kafka_mgmt_config.access_token = token["access_token"]
     
     def get_kafka_mgmt_client():
@@ -144,10 +163,10 @@ def run_module():
         except rhoas_kafka_instance_sdk.ApiException as e:
             rb = json.loads(e.body)
             result['message'] = f'{e.body}'
-            module.fail_json(msg=f'Failed to delete kafka topic with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}` because `{rb["detail"]}`)', **result)
+            module.fail_json(msg=f'Failed to delete kafka topic with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}` because `{rb["detail"]}`.')
         except Exception as e:
             result['message'] = f'{e}'
-            module.fail_json(msg=f'Failed to delete kafka topic with error: `{e}`.', **result)
+            module.fail_json(msg=f'Failed to delete kafka topic with error: `{e}`.')
 
 def main():
     run_module()

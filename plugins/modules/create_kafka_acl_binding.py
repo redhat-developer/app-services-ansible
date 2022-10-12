@@ -4,17 +4,18 @@
 # Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
 import json
-__metaclass__ = type
+import os
+
+from ..module_utils.constants.constants import API_BASE_HOST
+from dotenv import load_dotenv
 
 DOCUMENTATION = r'''
 ---
 module: create_kafka_acl_binding
 
-short_description: Create Access Control Lists (ACLs) for Red Hat OpenShift Streams for Apache Kafka Instance
+short_description: Create Access Control Lists (ACLs) for Red Hat OpenShift Streams for Apache Kafka Instance.
 
-# If this is part of a collection, you need to use semantic versioning,
-# i.e. the version is of the form "2.5.0" and not "2.4".
-version_added: "0.1.1-aplha"
+version_added: "0.1.1-alpha"
 
 description: Create Access Control Lists (ACLs) Red Hat OpenShift Streams for Apache Kafka Instance. More details can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclBinding.md
 
@@ -24,7 +25,7 @@ options:
         required: true
         type: str
     kafka_id:
-        description: ID of the Kafka instance
+        description: ID of the Kafka instance.
         required: false 
         type: str
     kafka_admin_url:
@@ -51,6 +52,10 @@ options:
         description: Permission type of ACL, full list of possible values can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclPermissionType.md
         required: true
         type: str
+    openshift_offline_token:
+        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        required: false
+        type: str
  
 extends_documentation_fragment:
     - dimakis.rhosak_test.rhosak_doc_fragment
@@ -65,11 +70,12 @@ EXAMPLES = r'''
     redhat.rhoask.create_kafka_acl_binding:
       kafka_id: "{{ kafka_req_resp.kafka_id }}"
       principal: " {{ srvce_acc_resp_obj['client_id'] }}"
-      resource_name: "bindacl"
+      resource_name: "topic_name"
       resource_type: "Topic"
       pattern_type: "PREFIXED"
       operation_type: "all"
       permission_type: "allow"
+      openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
       
 '''
 
@@ -81,7 +87,7 @@ original_message:
     returned: always
     sample: can be found here: https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_instance_sdk/docs/AclBinding.md
 message:
-    description: "ACL Binding Created"
+    description: "ACL Binding Created".
     type: dict
     returned: in success case
 kafka_req_resp:
@@ -93,13 +99,16 @@ kafka_admin_url:
     description: The Kafka Admin URL. This is the URL of the Kafka instance to connect to.
     type: str
     returned: If no kafka_admin_url is passed but the Kafka ID is passed, when the module is successful.
+env_url_error:
+    description: The error message returned if no environment variable is passed for the BASE_HOST URL.
+    type: str
+    returned: when the module uses default url instead of passed environment variable
 '''
 
 from ansible.module_utils.basic import AnsibleModule
 import rhoas_kafka_mgmt_sdk
 from rhoas_kafka_mgmt_sdk.api import default_api
 import auth.rhoas_auth as auth
-
 import rhoas_kafka_instance_sdk
 from rhoas_kafka_instance_sdk.api import acls_api
 from rhoas_kafka_instance_sdk.model.acl_binding import AclBinding
@@ -107,10 +116,9 @@ from rhoas_kafka_instance_sdk.model.acl_resource_type import AclResourceType as 
 from rhoas_kafka_instance_sdk.model.acl_pattern_type import AclPatternType as apt
 from rhoas_kafka_instance_sdk.model.acl_operation import AclOperation as aot
 from rhoas_kafka_instance_sdk.model.acl_permission_type import AclPermissionType as apert
-
-
 import rhoas_kafka_instance_sdk
 
+load_dotenv(".env")
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -123,43 +131,40 @@ def run_module():
         pattern_type = dict(type='str', required = True), 
         operation_type = dict(type='str', required = True),
         permission_type = dict(type='str', required = True),
+        openshift_offline_token=dict(type='str', required=False),
     )
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # changed is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
         original_message='',
         message='',
         kafka_admin_url='',
         kafka_admin_resp_obj='',
-        
+        env_url_error='',
     )
 
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
-        supports_check_mode=True
+        supports_check_mode=False
     )
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    # module.check_mode = False
     if module.check_mode:
+        result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
+        
+    if module.params['openshift_offline_token'] is None:
+        token = auth.get_access_token(offline_token=None)
+    else:
+        token = auth.get_access_token(module.params['openshift_offline_token'])
 
+    api_base_host = os.getenv("API_BASE_HOST") 
+    if api_base_host is None:
+        result['env_url_error'] = 'cannot find API_BASE_HOST in .env file, using default url values instead'
+        api_base_host = API_BASE_HOST
     kafka_mgmt_config = rhoas_kafka_mgmt_sdk.Configuration(
-        host = "https://api.openshift.com",
+        host = api_base_host,
     )
  
-    token = auth.get_access_token()
     kafka_mgmt_config.access_token = token["access_token"]
     
     configuration = rhoas_kafka_instance_sdk.Configuration()
@@ -184,7 +189,9 @@ def run_module():
                     configuration.host = result['kafka_admin_url']
                 except rhoas_kafka_mgmt_sdk.ApiException as e:
                     rb = json.loads(e.body)
-                    module.fail_json(msg=f'Failed to create Access Control List binding with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+                    module.fail_json(msg=f'Failed to create Access Control List binding with API exception code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.', **result)
+                except Exception as e:
+                    module.fail_json(msg=f'Failed to create Access Control List binding with exception: {e}', **result)
                 
     
     # Check for kafka_admin_url to be used to create topic
@@ -206,8 +213,14 @@ def run_module():
             op = aot(module.params['operation_type'].upper())
         if module.params['permission_type'] is not None:
             per = apert(module.params['permission_type'].upper())
-        if module.params['principal'].startswith('User:') is False:
-            prncpl = f'User:{module.params["principal"].lstrip(" ")}'
+        if module.params['principal'].startswith('user:') is True:
+            prncpl = module.params['principal'].title().replace(" ", "")
+            result['message'] = prncpl
+        elif module.params['principal'].startswith('User:') is True:
+            prncpl = module.params['principal'].replace(" ", "")
+            result['message'] = prncpl
+        else:
+            prncpl = f'User:{module.params["principal"].replace(" ", "")}'
             
         acl_binding = AclBinding( 
             resource_type = rt, 
@@ -224,12 +237,12 @@ def run_module():
                 result['message'] = "ACL Binding Created"
             result['changed'] = True
 
-            # in the event of a successful module execution, you will want to
-            # simple AnsibleModule.exit_json(), passing the key/value results
             module.exit_json(**result)
         except rhoas_kafka_instance_sdk.ApiException as e:
             rb = json.loads(e.body)
-            module.fail_json(msg=f'Failed to create Access Control List binding with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+            module.fail_json(msg=f'Failed to create Access Control List binding with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.', **result)
+        except Exception as e:
+            module.fail_json(msg=f'Failed to create Access Control List binding with error: `{e}`.', **result)
 
 
 def main():
