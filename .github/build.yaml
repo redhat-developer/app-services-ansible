@@ -4,6 +4,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 env:
   API_BASE_HOST="http://localhost:8080"
 jobs:
