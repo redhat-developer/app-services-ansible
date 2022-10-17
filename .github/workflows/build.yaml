@@ -6,7 +6,8 @@ on:
     branches: [main]
   workflow_dispatch:
 env:
-  API_BASE_HOST: http://localhost:8080
+  API_BASE_HOST: http://localhost:8000
+  OFFLINE_TOKEN: ${{ secrets.MOCK_OFFLINE_TOKEN }}
 jobs:
   build:
     name: Build and test
