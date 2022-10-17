@@ -54,14 +54,7 @@ options:
         description: Billing model for the Kafka instance.
         required: true 
         type: str
-    instance_type:
-        description: Instance type for the Kafka instance.
-        required: false
-        type: str
-    openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
-        required: false
-        type: str
+
  
 extends_documentation_fragment:
     - rhoas.rhoas.rhoas_doc_fragment
@@ -75,13 +68,9 @@ EXAMPLES = r'''
   - name: Create kafka
     redhat.rhoask.create_kafka:
       name: "kafka_name"
-      instance_type: "x1"
-      billing_model: "standard"
+      plan: "developer.x1"
       cloud_provider: "aws"
       region: "us-east-1"
-      plan: "developer.x1"
-      billing_cloud_account_id: "123456789"
-      openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
     register:
       kafka_req_resp 
 '''
@@ -134,13 +123,12 @@ def run_module():
         name=dict(type='str', required=True),
         cloud_provider=dict(type='str', required=True),
         region=dict(type='str', required=True),
-        reauthentication_enabled=dict(type='bool', required=False, default=True),
         plan=dict(type='str', required=True),
+        ## Advanced options
+        reauthentication_enabled=dict(type='bool', required=False, default=True),
         billing_cloud_account_id=dict(type='str', required=False),
         marketplace=dict(type='str', required=False),
         billing_model=dict(type='str', required=True),
-        instance_type=dict(type='str', required=False),
-        openshift_offline_token=dict(type='str', required=False),
     )
 
     result = dict(
