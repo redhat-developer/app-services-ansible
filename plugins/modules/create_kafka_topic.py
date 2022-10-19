@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 import json
 import os
 
+from ..module_utils.common import get_offline_token
 from ..module_utils.constants.constants import API_BASE_HOST
 from dotenv import load_dotenv
 
@@ -49,7 +50,7 @@ options:
         required: false
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
         required: false
         type: str
  
@@ -70,7 +71,7 @@ EXAMPLES = r'''
       retention_period_ms: "86400000"
       retention_size_bytes: "1073741824"
       cleanup_policy: "compact"
-      openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
+      openshift_offline_token: "OPENSHIFT_OFFLINE_TOKEN"
     register:
       create_topic_res_obj
 
@@ -111,7 +112,6 @@ load_dotenv(".env")
 from ansible.module_utils.basic import AnsibleModule
 import rhoas_kafka_mgmt_sdk
 from rhoas_kafka_mgmt_sdk.api import default_api
-import auth.rhoas_auth as auth
 import rhoas_kafka_instance_sdk
 from rhoas_kafka_instance_sdk.api import topics_api
 from rhoas_kafka_instance_sdk.model.new_topic_input import NewTopicInput
@@ -149,12 +149,11 @@ def run_module():
     if module.check_mode:
         module.exit_json(**result)
 
-    if module.params['openshift_offline_token'] is None or module.params['openshift_offline_token'] == '':
-        result['env_var'] = 'using token from args'
-        token = auth.get_access_token(offline_token=None)
+    token = {}
+    if "http://localhost" in os.environ.get("API_BASE_HOST"):
+        token['access_token'] = "DUMMY_TOKEN_FOR_MOCK"
     else:
-        result['env_var'] = f'using environmental variable.'
-        token = auth.get_access_token(module.params['openshift_offline_token'])
+        token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
         
     api_base_host = os.getenv("API_BASE_HOST") 
     if api_base_host is None:

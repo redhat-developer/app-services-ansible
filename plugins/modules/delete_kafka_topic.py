@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 import json
 import os
 
+from ..module_utils.common import get_offline_token
 from ..module_utils.constants.constants import API_BASE_HOST
 from dotenv import load_dotenv
 
@@ -32,6 +33,10 @@ options:
         description: Admin URL of the Kafka instance. This URL is used to communicate with the Kafka instance.
         required: false
         type: str
+    openshift_offline_token:
+        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        required: false
+        type: str
  
 extends_documentation_fragment:
     - rhoas.rhoas.rhoas_doc_fragment
@@ -46,7 +51,7 @@ EXAMPLES = r'''
     delete_kafka_topic:
       name: "KAFKA_TOPIC_NAME"
       kafka_id: "KAFKA_ID"
-      openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
+      openshift_offline_token: "OPENSHIFT_OFFLINE_TOKEN"
 '''
 
 RETURN = r'''
@@ -111,10 +116,11 @@ def run_module():
         result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
 
-    if module.params['openshift_offline_token'] is None or module.params['openshift_offline_token'] == '':
-        token = auth.get_access_token(offline_token=None)
+    token = {}
+    if "http://localhost" in os.environ.get("API_BASE_HOST"):
+        token['access_token'] = "DUMMY_TOKEN_FOR_MOCK"
     else:
-        token = auth.get_access_token(module.params['openshift_offline_token'])
+        token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
         
     api_base_host = os.getenv("API_BASE_HOST") 
     if api_base_host is None:

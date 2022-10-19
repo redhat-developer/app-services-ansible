@@ -74,8 +74,6 @@ EXAMPLES = r'''
       openshift_offline_token: "OPENSHIFT_OFFLINE_TOKEN"
     register:
       update_topic_res_obj
-
- 
 '''
 
 RETURN = r'''

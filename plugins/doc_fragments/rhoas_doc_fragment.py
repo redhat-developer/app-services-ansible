@@ -11,7 +11,8 @@ class ModuleDocFragment(object):
       found here https://console.redhat.com/openshift/token
     - This module depends on the 'rhoas-sdk' Python package. This package can be installed using the
       'pip' command. 
-    - 'pip install rhoas-sdksq'
+    - 'pip install rhoas-sdks'
+    - or 'pip install rhoas-sdks --force-reinstall' to make sure you have the latest version of the SDKs available
   options:
     rhosak_api_key:
       description: The API key to use for authentication.
@@ -22,11 +23,11 @@ class ModuleDocFragment(object):
     # Additional section
     OTHER = r'''
     options:
-      There are some depencdanceies that are required for this module to work. These are:
+      There are some dependencies that are required for this module to work. These are:
         - "python >= 3.9"
         - "rhoas-sdks >= 0.3.1"
         
-    - There are some depencdanceies that are required for this module to work. These are:
+    - There are some dependencies that are required for this module to work. These are:
       - "python >= 3.9"
       - "rhoas-sdks >= 0.3.1"
     - Dependencies can be installed using pip:

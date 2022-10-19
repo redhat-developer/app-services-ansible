@@ -8,6 +8,7 @@ import os
 import time
 
 from ..module_utils.constants.constants import API_BASE_HOST
+from ..module_utils.common import get_offline_token
 from dotenv import load_dotenv
 
 DOCUMENTATION = r'''
@@ -59,7 +60,7 @@ options:
         required: false
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
         required: false
         type: str
  
@@ -81,7 +82,7 @@ EXAMPLES = r'''
       region: "us-east-1"
       plan: "developer.x1"
       billing_cloud_account_id: "123456789"
-      openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
+      openshift_offline_token: "OPENSHIFT_OFFLINE_TOKEN"
     register:
       kafka_req_resp 
 '''
@@ -97,11 +98,6 @@ message:
     description: The output error / exception message that is returned in the case the module generates an error / exception.
     type: dict
     returned: in case of error / exception
-
-    description: The response object from the Kafka Management API.
-    sample: As can be found in the Red Hat App-Services Python SDK https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_mgmt_sdk/docs/KafkaRequest.md\#kafkarequest
-    type: dict
-    returned: If the module is successful.
 kafka_admin_url:
     description: The admin url for the Kafka instance.
     type: str
@@ -151,7 +147,6 @@ def run_module():
         kafka_admin_url='',
         kafka_state='',
         env_url_error='',
-        env_var=''
     )
 
     module = AnsibleModule(
@@ -163,13 +158,12 @@ def run_module():
         result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
 
-    if module.params['openshift_offline_token'] is None or module.params['openshift_offline_token'] == '':
-        result['env_var'] = 'using token from args'
-        token = auth.get_access_token(offline_token=None)
+    token = {}
+    if "http://localhost" in os.environ.get("API_BASE_HOST"):
+        token['access_token'] = "DUMMY_TOKEN_FOR_MOCK"
     else:
-        result['env_var'] = f'using environmental variable.'
-        token = auth.get_access_token(module.params['openshift_offline_token'])
-   
+        token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
+        
     api_base_host = os.getenv("API_BASE_HOST") 
     if api_base_host is None:
         result['env_url_error'] = 'cannot find API_BASE_HOST in .env file, using default url values instead'
