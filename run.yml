@@ -6,11 +6,12 @@
   tasks:
   - name: Create kafka
     rhoas.rhoas.create_kafka:
-      name: "unique_kafka_name"
+      name: "unique-kafka-name"
       cloud_provider: "aws"
       region: "us-east-1"
       plan: "developer.x1"
       billing_model: "standard"
+      billing_cloud_account_id: "billing_cloud_account_id"
       # openshift_offline_token: "OFFLINE_TOKEN"
     register:
       kafka_req_resp_obj
@@ -68,6 +69,24 @@
       partitions: 1
     register:
       kafka_topic_resp_obj2
+  - name: Update Kakfa topic1
+    rhoas.rhoas.update_kafka_topic:
+      topic_name: "topic_one"
+      kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
+      # to hardcode the kafka_id uncomment and use the following line
+      # kafka_id: "KAFKA_ID"
+
+      # openshift_offline_token: "OFFLINE_TOKEN"
+      partitions: 1
+      
+      ## this will update the cleanup_policy from compact to delete
+      cleanup_policy: "delete"
+
+      ## some other parameters that can be updated
+      # retention_period_ms: "86400666"
+      # retention_size_bytes: "1073741824"
+    register:
+      kafka_topic_resp_obj
   - name: Delete kafka topic_one
     rhoas.rhoas.delete_kafka_topic:
       topic_name: "topic_one"
@@ -86,3 +105,8 @@
       # service_account_id: "service_account_id"
       service_account_id: "{{ srvce_acc_resp_obj['id'] }}"
     # no_log: True
+  - name: Delete kafka
+    rhoas.rhoas.delete_kafka_by_id:
+      kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
+      # to hardcode the kafka_id uncomment and use the following line
+      # kafka_id: "KAFKA_ID"
