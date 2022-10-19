@@ -1,5 +1,5 @@
 ---
-- name: Create_kafka test
+- name: RHOAS test
   hosts: localhost
   gather_facts: false
   connection: local
@@ -110,3 +110,4 @@
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
+
