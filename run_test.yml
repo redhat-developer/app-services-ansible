@@ -18,27 +18,28 @@
   - name: Debug create kafka
     debug:
       msg: "{{ kafka_req_resp_obj['kafka_id'] }}"
-  - name: Create Service Account
-    rhoas.rhoas.create_service_account:
-      name: "jeeves"
-      description: "jeeves service account"
-      # openshift_offline_token: "OFFLINE_TOKEN"
-    no_log: True
-    register:
-      srvce_acc_resp_obj
+      ## this should remain commented out until the new version of the mock api is released
+  # - name: Create Service Account
+  #   rhoas.rhoas.create_service_account:
+  #     name: "jeeves"
+  #     description: "jeeves service account"
+  #     # openshift_offline_token: "OFFLINE_TOKEN"
+  #   no_log: True
+  #   register:
+  #     srvce_acc_resp_obj
   - name: Create kafka ACL Service Binding
     rhoas.rhoas.create_kafka_acl_binding:
-      # dynamically get the kafka id from the kafka_req_resp
+      ## dynamically get the kafka id from the kafka_req_resp
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
-      # to hardcode the kafka_id uncomment and use the following line
+      ## to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
 
       # dynamically get the service account id from the srvce_acc_resp_obj
-      principal: " {{ srvce_acc_resp_obj['client_id'] }}"
+      # principal: " {{ srvce_acc_resp_obj['client_id'] }}"
       # to hardcode the principal_id uncomment and use the following line
-      # principal: "PRINCIPAL_ID"
+      principal: "PRINCIPAL_ID"
 
-      # These keys must have values to be passed for the successful execution of the task
+      ## These keys must have values to be passed for the successful execution of the task
       resource_name: "topic_name"
       resource_type: "Topic"
       pattern_type: "PREFIXED"
@@ -46,13 +47,13 @@
       permission_type: "allow"
       # openshift_offline_token: "OFFLINE_TOKEN"
 
-      # passing the kafka_admin_url from the kafka_req_resp_obj is more efficient as one less API call is made
+      ## passing the kafka_admin_url from the kafka_req_resp_obj is more efficient as one less API call is made
       # kafka_admin_url: "https://kafka-admin.dev.struttin.com"
   - name: Create Kafka Topic
     rhoas.rhoas.create_kafka_topic:
       topic_name: "topic_one"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
-      # to hardcode the kafka_id uncomment and use the following line
+      ## to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
 
       # openshift_offline_token: "OFFLINE_TOKEN"
@@ -66,7 +67,7 @@
     rhoas.rhoas.create_kafka_topic:
       topic_name: "topic_two"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
-      # to hardcode the kafka_id uncomment and use the following line
+      ## to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
 
       # openshift_offline_token: "OFFLINE_TOKEN"
@@ -77,7 +78,7 @@
     rhoas.rhoas.update_kafka_topic:
       topic_name: "topic_one"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
-      # to hardcode the kafka_id uncomment and use the following line
+      ## to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
 
       # openshift_offline_token: "OFFLINE_TOKEN"
@@ -99,7 +100,7 @@
       topic_name: "topic_one"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
 
-      # to hardcode the kafka_id uncomment and use the following line
+      ## to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
 
       # openshift_offline_token: "OFFLINE_TOKEN"
@@ -107,10 +108,12 @@
     rhoas.rhoas.delete_kafka_topic:
       topic_name: "topic_two"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
-      # to hardcode the kafka_id uncomment and use the following line
+      ## to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
 
       # openshift_offline_token: "OFFLINE_TOKEN"
+
+      ## this should remain commented out until the new version of the mock api is released
   - name: Delete Service Account
     rhoas.rhoas.delete_service_account_by_id:
       # service_account_id: "service_account_id"
@@ -120,6 +123,7 @@
   - name: Delete kafka
     rhoas.rhoas.delete_kafka_by_id:
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
-      # to hardcode the kafka_id uncomment and use the following line
+      ## to hardcode the kafka_id uncomment and use the following line
+      # kafka_id: "KAFKA_ID"
 
       # openshift_offline_token: "OFFLINE_TOKEN"

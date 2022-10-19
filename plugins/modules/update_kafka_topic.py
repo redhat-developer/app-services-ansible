@@ -12,13 +12,13 @@ from dotenv import load_dotenv
 
 DOCUMENTATION = r'''
 ---
-module: create_kafka_topic
+module: update_kafka_topic
 
-short_description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
+short_description: Update a topic's configuration settings on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
 version_added: "0.1.0-alpha"
 
-description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
+description: Update a topic's configuration settings on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
 options:
     topic_name:
@@ -63,8 +63,8 @@ author:
 
 EXAMPLES = r'''
 # Pass in a message
-  - name: Create Kafka Topic
-    create_kafka_topic:
+  - name: Update Kafka Topic
+    update_kafka_topic:
       topic_name: "kafka-topic-name"
       kafka_id: "{{ kafka_req_resp.id }}"
       partitions: 1
@@ -73,9 +73,7 @@ EXAMPLES = r'''
       cleanup_policy: "compact"
       openshift_offline_token: "OPENSHIFT_OFFLINE_TOKEN"
     register:
-      create_topic_res_obj
-
- 
+      update_topic_res_obj
 '''
 
 RETURN = r'''
@@ -85,14 +83,14 @@ original_message:
     type: dict 
     returned: always in case of successful execution
 message:
-    description: A message detailing topic created successfully.
+    description: A message detailing topic updated successfully.
     type: str
     returned: always in case of successful execution
-    sample: "Topic created successfully"
-create_topic_res_obj:
-    description: The configuration of the topic that was created 
+    sample: "Topic updated successfully"
+update_topic_res_obj:
+    description: The configuration of the topic that was updated 
     type: dict
-    returned: always upon successful creation of a topic
+    returned: always upon successful update of a topic
 kafka_admin_resp_obj:
     description: The response object from the Kafka Admin REST API which details the Kafka instance
     type: dict
@@ -114,7 +112,6 @@ import rhoas_kafka_mgmt_sdk
 from rhoas_kafka_mgmt_sdk.api import default_api
 import rhoas_kafka_instance_sdk
 from rhoas_kafka_instance_sdk.api import topics_api
-from rhoas_kafka_instance_sdk.model.new_topic_input import NewTopicInput
 from rhoas_kafka_instance_sdk.model.topic_settings import TopicSettings
 from rhoas_kafka_instance_sdk.model.config_entry import ConfigEntry
 
@@ -135,7 +132,7 @@ def run_module():
         changed=False,
         original_message=dict,
         message='',
-        create_topic_res_obj=dict,
+        update_topic_res_obj=dict,
         kafka_admin_resp_obj=dict,
         kafka_admin_url='',
         env_url_error='',
@@ -147,6 +144,7 @@ def run_module():
     )
 
     if module.check_mode:
+        result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
 
     token = {}
@@ -167,28 +165,27 @@ def run_module():
     
     def get_kafka_mgmt_client():
         with rhoas_kafka_mgmt_sdk.ApiClient(kafka_mgmt_config) as kafka_mgmt_api_client:
-            # Create an instance of the API class
+            # Update an instance of the API class
             kafka_mgmt_api_instance = default_api.DefaultApi(kafka_mgmt_api_client)
             return kafka_mgmt_api_instance
         
     def get_kafka_admin_url(kafka_mgmt_api_instance):
-        # Check for kafka_admin_url to be used to create topic
+        # Check for kafka_admin_url to be used to update topic
         while (result['kafka_admin_url'] == ""):
             # Enter a context with an instance of the API client
                 kafka_id = module.params['kafka_id'] 
 
                 try:
                     kafka_mgmt_api_response = kafka_mgmt_api_instance.get_kafka_by_id(kafka_id)
-                    kafka_mgmt_api_response
                     result['kafka_admin_url'] = kafka_mgmt_api_response['admin_api_server_url']
                     result['kafka_admin_resp_obj'] = kafka_mgmt_api_response.to_dict()
                 except rhoas_kafka_mgmt_sdk.ApiException as e:
                     rb = json.loads(e.body)
-                    module.fail_json(msg=f'Failed to create kafka topic with API exception code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+                    module.fail_json(msg=f'Failed to get kafka admin URL with API exception code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
                 except Exception as e:
-                    module.fail_json(msg=f'Failed to create kafka topic with general exception: `{e}`.')
+                    module.fail_json(msg=f'Failed to get kafka admin URL with general exception: `{e}`.')
                 
-    # Check for kafka_admin_url to be used to create topic
+    # Check for kafka_admin_url to be used to update topic
     if (module.params['kafka_admin_url'] is None) or (module.params['kafka_admin_url'] == ""):
         get_kafka_admin_url(get_kafka_mgmt_client())
 
@@ -200,60 +197,43 @@ def run_module():
         api_instance = topics_api.TopicsApi(api_client)
         
         number_of_partitions = 1 
-        config_entry_flag = False
         config_entry_dict = {}
         
         #check for user input variables 
         if module.params['retention_size_bytes'] is not None:
             retention_size_bytes=module.params['retention_size_bytes']
             config_entry_dict = { "retention.bytes": retention_size_bytes}
-            config_entry_flag = True
             
         if module.params['retention_period_ms'] is not None:
             retention_period_ms=module.params['retention_period_ms']
             config_entry_dict = { "retention.ms": retention_period_ms}
-            config_entry_flag = True
             
         if module.params['cleanup_policy'] is not None:
             cleanup_policy=module.params['cleanup_policy']
             config_entry_dict = { "cleanup.policy": cleanup_policy}
-            config_entry_flag = True
             
         if module.params['partitions'] is not None:
             number_of_partitions=module.params['partitions']
-            config_entry_flag = True
           
-        # create a standard topic with presets stemming from the API 
-        if not config_entry_flag:
-            new_topic_input = NewTopicInput(
-                name=module.params['topic_name'],
-                settings=TopicSettings(
-                    num_partitions=number_of_partitions,
-                )
-            )
-        else:
-            # create a topic with custom settings as passed in by the user 
-            config = [ConfigEntry(key=key, value=value) for key, value in config_entry_dict.items()]
-            new_topic_input = NewTopicInput(
-                name=module.params['topic_name'],
-                settings=TopicSettings(
-                    num_partitions=number_of_partitions,
-                    config=config
-                    )
-            )
+        config = [ConfigEntry(key=key, value=value) for key, value in config_entry_dict.items()]
+        topic_name=module.params['topic_name']
+        topic_settings=TopicSettings(
+            num_partitions=number_of_partitions,
+            config=config
+        )
         try:
-            api_response = api_instance.create_topic(new_topic_input)
-            result['create_topic_res_obj'] = api_response.to_dict()
+            api_response = api_instance.update_topic(topic_name, topic_settings, async_req=True)
+            result['update_topic_res_obj'] = api_response.get().to_dict()
             result['changed'] = True
-            result['original_message'] = new_topic_input.to_dict()
-            result['message'] = "Topic created successfully"
+            result['original_message'] = topic_settings.to_dict()
+            result['message'] = "Topic updated successfully"
             module.exit_json(**result)
         except rhoas_kafka_instance_sdk.ApiException as e:
-            print("Exception when calling TopicsApi->create_topic: %s \ n" % e)
+            print("Exception when calling TopicsApi->update_topic: %s \ n" % e)
             rb = json.loads(e.body)
-            module.fail_json(msg=f'Failed to create kafka topic with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}` because `{rb["detail"]}`)', **result)
+            module.fail_json(msg=f'Failed to update kafka topic with API error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}` because `{rb["detail"]}`)', **result)
         except Exception as e:
-            module.fail_json(msg=f'Failed to create kafka topic with error: `{e}`', **result)
+            module.fail_json(msg=f'Failed to update kafka topic with general error: `{e}`', **result)
 
 def main():
     run_module()

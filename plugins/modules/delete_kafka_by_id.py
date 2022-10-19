@@ -2,8 +2,10 @@
 
 
 from __future__ import (absolute_import, division, print_function)
+import json
 import os
 
+from ..module_utils.common import get_offline_token
 from ..module_utils.constants.constants import API_BASE_HOST
 from dotenv import load_dotenv
 
@@ -23,7 +25,7 @@ options:
         required: true
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
         required: false
         type: str
  
@@ -38,6 +40,7 @@ EXAMPLES = r'''
   - name: Delete kafka instance by ID
     delete_kafka_by_id:
       kafka_id: "kafka_id"
+      openshift_offline_token: "offline_token"
 '''
 
 RETURN = r'''
@@ -84,10 +87,11 @@ def run_module():
         result['message'] = 'Check mode is not supported.'
         module.exit_json(**result)
 
-    if module.params['openshift_offline_token'] is None or module.params['openshift_offline_token'] == '':
-        token = auth.get_access_token(offline_token=None)
+    token = {}
+    if "http://localhost" in os.environ.get("API_BASE_HOST"):
+        token['access_token'] = "DUMMY_TOKEN_FOR_MOCK"
     else:
-        token = auth.get_access_token(module.params['openshift_offline_token'])
+        token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
     
     api_base_host = os.getenv("API_BASE_HOST") 
     if api_base_host is None:
@@ -106,19 +110,18 @@ def run_module():
         id = module.params['kafka_id'] # str | The ID of the Kafka instance to be deleted.
         try:
             del_resp = api_instance.delete_kafka_by_id(id, _async, async_req=True)
-            del_resp = del_resp.get()
             result['original_message'] = f'Kafka instance with ID: {id} set for deletion'
             result['message'] = "Kafka instance deleted"
             result['changed'] = True
+            
             # exit the module and return the state 
             module.exit_json(**result)
         except rhoas_kafka_mgmt_sdk.ApiException as e:
             print("Exception when calling DefaultApi -> delete_kafka_by_id: %s\n" % e)
-            result['message'] = e
-            module.fail_json(msg='Failed to delete kafka instance', **result)
-        except Exception as e:
-            result['message'] = e
-            module.fail_json(msg='Failed to delete kafka instance', **result)
+            rb = json.loads(e.body)
+            module.fail_json(msg=f'Failed to delete kafka instance with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
+        except Exception:
+            module.fail_json(msg=f'Failed to delete kafka instance with exception.', **result)
 
 def main():
     run_module()

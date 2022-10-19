@@ -6,6 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 import json
 import os
 
+from ..module_utils.common import get_offline_token
 from ..module_utils.constants.constants import API_BASE_HOST
 from dotenv import load_dotenv
 
@@ -53,7 +54,7 @@ options:
         required: true
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
         required: false
         type: str
  
@@ -67,7 +68,7 @@ author:
 EXAMPLES = r'''
 # Pass in a message
   - name: Create kafka ACL Service Binding
-    redhat.rhoask.create_kafka_acl_binding:
+    rhoas.rhoas.create_kafka_acl_binding:
       kafka_id: "{{ kafka_req_resp.kafka_id }}"
       principal: " {{ srvce_acc_resp_obj['client_id'] }}"
       resource_name: "topic_name"
@@ -75,8 +76,8 @@ EXAMPLES = r'''
       pattern_type: "PREFIXED"
       operation_type: "all"
       permission_type: "allow"
-      openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
-      
+      openshift_offline_token: "OPENSHIFT_OFFLINE_TOKEN"
+    register: kafka_acl_resp
 '''
 
 RETURN = r'''
@@ -91,7 +92,7 @@ message:
     type: dict
     returned: in success case
 kafka_req_resp:
-    description: The response object from the Kafka_mgmt API.
+    description: The response object from the Kafka management API.
     sample: As can be found in the Red Hat App-Services Python SDK https://github.com/redhat-developer/app-services-sdk-python/blob/main/sdks/kafka_mgmt_sdk/docs/KafkaRequest.md#kafkarequest
     type: dict
     returned: If no kafka_admin_url is passed but the Kafka ID is passed, when the module is successful.
@@ -152,10 +153,11 @@ def run_module():
         result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
         
-    if module.params['openshift_offline_token'] is None:
-        token = auth.get_access_token(offline_token=None)
+    token = {}
+    if "http://localhost" in os.environ.get("API_BASE_HOST"):
+        token['access_token'] = "DUMMY_TOKEN_FOR_MOCK"
     else:
-        token = auth.get_access_token(module.params['openshift_offline_token'])
+        token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
 
     api_base_host = os.getenv("API_BASE_HOST") 
     if api_base_host is None:

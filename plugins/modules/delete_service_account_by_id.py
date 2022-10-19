@@ -7,6 +7,7 @@ import json
 import os
 
 from ..module_utils.constants.constants import SSO_BASE_HOST
+from ..module_utils.common import get_offline_token
 from dotenv import load_dotenv
 
 DOCUMENTATION = r'''
@@ -25,7 +26,7 @@ options:
         required: true
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Cluster Manager API Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
         required: false
         type: str
         
@@ -40,7 +41,7 @@ EXAMPLES = r'''
   - name: Delete Service Account
     delete_service_account_by_id:
         service_account_id: "SERVICE_ACCOUNT_ID"
-        openshift_offline_token: "OPENSHIFT_CLUSTER_MANAGER_API_OFFLINE_TOKEN"
+        openshift_offline_token: "OPENSHIFT_OFFLINE_TOKEN"
 '''
 
 RETURN = r'''
@@ -87,10 +88,11 @@ def run_module():
         result['message'] = 'Check mode is not supported'
         module.exit_json(**result)
 
-    if module.params['openshift_offline_token'] is None or module.params['openshift_offline_token'] == '':
-        token = auth.get_access_token(offline_token=None)
+    token = {}
+    if "http://localhost" in os.environ.get("SSO_BASE_HOST"):
+        token['access_token'] = "DUMMY_TOKEN_FOR_MOCK"
     else:
-        token = auth.get_access_token(module.params['openshift_offline_token'])
+        token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
     
     configuration = rhoas_service_accounts_mgmt_sdk.Configuration()
     sso_base_host = os.getenv("SSO_BASE_HOST") 
