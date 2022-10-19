@@ -37,5 +37,5 @@ jobs:
       - name: Run playbook
         uses: dawidd6/action-ansible-playbook@v2
         with:
-          playbook: run.yml
+          playbook: run_test.yml
           directory: ./
