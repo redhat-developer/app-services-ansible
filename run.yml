@@ -1,5 +1,5 @@
 ---
-- name: Create_kafka test
+- name: RHOAS test
   hosts: localhost
   gather_facts: false
   connection: local
@@ -11,7 +11,7 @@
       region: "us-east-1"
       plan: "developer.x1"
       billing_model: "standard"
-      billing_cloud_account_id: "billing_cloud_account_id"
+      # billing_cloud_account_id: "billing_cloud_account_id"
       # openshift_offline_token: "OFFLINE_TOKEN"
     register:
       kafka_req_resp_obj
@@ -22,6 +22,7 @@
     rhoas.rhoas.create_service_account:
       name: "jeeves"
       description: "jeeves service account"
+      # openshift_offline_token: "OFFLINE_TOKEN"
     no_log: True
     register:
       srvce_acc_resp_obj
@@ -37,12 +38,13 @@
       # to hardcode the principal_id uncomment and use the following line
       # principal: "PRINCIPAL_ID"
 
-      # These values need to be passed for the successful execution of the task
+      # These keys must have values to be passed for the successful execution of the task
       resource_name: "topic_name"
       resource_type: "Topic"
       pattern_type: "PREFIXED"
       operation_type: "all"
       permission_type: "allow"
+      # openshift_offline_token: "OFFLINE_TOKEN"
 
       # passing the kafka_admin_url from the kafka_req_resp_obj is more efficient as one less API call is made
       # kafka_admin_url: "https://kafka-admin.dev.struttin.com"
@@ -53,6 +55,7 @@
       # to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
 
+      # openshift_offline_token: "OFFLINE_TOKEN"
       partitions: 1
       retention_period_ms: "86400666"
       retention_size_bytes: "1073741824"
@@ -66,6 +69,7 @@
       # to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
 
+      # openshift_offline_token: "OFFLINE_TOKEN"
       partitions: 1
     register:
       kafka_topic_resp_obj2
@@ -87,6 +91,9 @@
       # retention_size_bytes: "1073741824"
     register:
       kafka_topic_resp_obj
+  - name: Debug update kafka topic
+    debug:
+      msg: "{{ kafka_topic_resp_obj }}" 
   - name: Delete kafka topic_one
     rhoas.rhoas.delete_kafka_topic:
       topic_name: "topic_one"
@@ -94,19 +101,25 @@
 
       # to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
+
+      # openshift_offline_token: "OFFLINE_TOKEN"
   - name: Delete kafka topic_two
     rhoas.rhoas.delete_kafka_topic:
       topic_name: "topic_two"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
       # kafka_id: "KAFKA_ID"
+
+      # openshift_offline_token: "OFFLINE_TOKEN"
   - name: Delete Service Account
     rhoas.rhoas.delete_service_account_by_id:
       # service_account_id: "service_account_id"
-      service_account_id: "{{ srvce_acc_resp_obj['id'] }}"
-    # no_log: True
+      service_account_id: "{{ srvce_acc_resp_obj['client_id'] }}"
+
+      # openshift_offline_token: "OFFLINE_TOKEN"
   - name: Delete kafka
     rhoas.rhoas.delete_kafka_by_id:
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
-      # kafka_id: "KAFKA_ID"
+
+      # openshift_offline_token: "OFFLINE_TOKEN"
