@@ -1,17 +1,17 @@
 ---
-- name: Create_kafka test
+- name: RHOAS test
   hosts: localhost
   gather_facts: false
   connection: local
   tasks:
   - name: Create kafka
-    dimakis.rhosak_test.create_kafka:
+    rhoas.rhoas.create_kafka:
       name: "unique-kafka-name"
       cloud_provider: "aws"
       region: "us-east-1"
       plan: "developer.x1"
       billing_model: "standard"
-      billing_cloud_account_id: "billing_cloud_account_id"
+      # billing_cloud_account_id: "billing_cloud_account_id"
       # openshift_offline_token: "OFFLINE_TOKEN"
     register:
       kafka_req_resp_obj
@@ -19,7 +19,7 @@
     debug:
       msg: "{{ kafka_req_resp_obj['kafka_id'] }}"
   - name: Create Service Account
-    dimakis.rhosak_test.create_service_account:
+    rhoas.rhoas.create_service_account:
       name: "jeeves"
       description: "jeeves service account"
       # openshift_offline_token: "OFFLINE_TOKEN"
@@ -27,7 +27,7 @@
     register:
       srvce_acc_resp_obj
   - name: Create kafka ACL Service Binding
-    dimakis.rhosak_test.create_kafka_acl_binding:
+    rhoas.rhoas.create_kafka_acl_binding:
       # dynamically get the kafka id from the kafka_req_resp
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
@@ -38,7 +38,7 @@
       # to hardcode the principal_id uncomment and use the following line
       # principal: "PRINCIPAL_ID"
 
-      # These values need to be passed for the successful execution of the task
+      # These keys must have values to be passed for the successful execution of the task
       resource_name: "topic_name"
       resource_type: "Topic"
       pattern_type: "PREFIXED"
@@ -49,7 +49,7 @@
       # passing the kafka_admin_url from the kafka_req_resp_obj is more efficient as one less API call is made
       # kafka_admin_url: "https://kafka-admin.dev.struttin.com"
   - name: Create Kafka Topic
-    dimakis.rhosak_test.create_kafka_topic:
+    rhoas.rhoas.create_kafka_topic:
       topic_name: "topic_one"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
@@ -63,7 +63,7 @@
     register:
       kafka_topic_resp_obj
   - name: Create Kafka Topic2
-    dimakis.rhosak_test.create_kafka_topic:
+    rhoas.rhoas.create_kafka_topic:
       topic_name: "topic_two"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
@@ -73,8 +73,29 @@
       partitions: 1
     register:
       kafka_topic_resp_obj2
+  - name: Update Kakfa topic1
+    rhoas.rhoas.update_kafka_topic:
+      topic_name: "topic_one"
+      kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
+      # to hardcode the kafka_id uncomment and use the following line
+      # kafka_id: "KAFKA_ID"
+
+      # openshift_offline_token: "OFFLINE_TOKEN"
+      partitions: 1
+      
+      ## this will update the cleanup_policy from compact to delete
+      cleanup_policy: "delete"
+
+      ## some other parameters that can be updated
+      # retention_period_ms: "86400666"
+      # retention_size_bytes: "1073741824"
+    register:
+      kafka_topic_resp_obj
+  - name: Debug update kafka topic
+    debug:
+      msg: "{{ kafka_topic_resp_obj }}" 
   - name: Delete kafka topic_one
-    dimakis.rhosak_test.delete_kafka_topic:
+    rhoas.rhoas.delete_kafka_topic:
       topic_name: "topic_one"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
 
@@ -83,7 +104,7 @@
 
       # openshift_offline_token: "OFFLINE_TOKEN"
   - name: Delete kafka topic_two
-    dimakis.rhosak_test.delete_kafka_topic:
+    rhoas.rhoas.delete_kafka_topic:
       topic_name: "topic_two"
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
@@ -91,16 +112,14 @@
 
       # openshift_offline_token: "OFFLINE_TOKEN"
   - name: Delete Service Account
-    dimakis.rhosak_test.delete_service_account_by_id:
+    rhoas.rhoas.delete_service_account_by_id:
       # service_account_id: "service_account_id"
-      service_account_id: "{{ srvce_acc_resp_obj['id'] }}"
+      service_account_id: "{{ srvce_acc_resp_obj['client_id'] }}"
 
       # openshift_offline_token: "OFFLINE_TOKEN"
-    # no_log: True
   - name: Delete kafka
-    dimakis.rhosak_test.delete_kafka_by_id:
+    rhoas.rhoas.delete_kafka_by_id:
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
-      # kafka_id: "KAFKA_ID"
 
       # openshift_offline_token: "OFFLINE_TOKEN"

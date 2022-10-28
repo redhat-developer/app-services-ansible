@@ -35,7 +35,7 @@ All modules require an 'OFFLINE_TOKEN' to be used with for authentication with t
   tasks:
   - name: Create kafka
     redhat_developer.rhoas.create_kafka:
-      name: "unique_kafka_name"
+      name: "unique-kafka-name"
       openshift_offline_token: "OFFLINE_TOKEN"
 ...
 ```
