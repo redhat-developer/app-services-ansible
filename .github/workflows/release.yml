@@ -18,4 +18,4 @@ jobs:
         uses: artis3n/ansible_galaxy_collection@v2
         with:
           api_key: '${{ secrets.ANSIBLE_GALAXY_API_KEY }}'
-          galaxy_version: '{{ $GITHUB_REF_SLUG }}'
+          galaxy_version: '${{ env.GITHUB_REF_SLUG }}'
