@@ -2,7 +2,7 @@
 # The namespace of the collection. This can be a company/brand/organization or product namespace under which all
 # content lives. May only contain alphanumeric lowercase characters and underscores. Namespaces cannot start with
 # underscores or numbers and cannot contain consecutive underscores
-namespace: rhoas 
+namespace: rhoas
 
 # The name of the collection. Has the same character restrictions as 'namespace'
 name: rhoas
@@ -21,7 +21,7 @@ authors:
 
 ### OPTIONAL but strongly recommended
 # A short summary description of the collection
-description: Collection for Red Hat Application Services 
+description: Collection for Red Hat Application Services
 
 # Either a single license or a list of licenses for content inside of a collection. Ansible Galaxy currently only
 # accepts L(SPDX,https://spdx.org/licenses/) licenses. This key is mutually exclusive with 'license_file'
@@ -66,7 +66,7 @@ build_ignore:
   - Makefile
   - roles
   - "*.tar.gz"
-
+  
   
 
 
