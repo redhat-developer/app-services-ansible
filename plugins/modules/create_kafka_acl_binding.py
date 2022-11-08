@@ -154,10 +154,14 @@ def run_module():
         module.exit_json(**result)
         
     token = {}
+    if os.environ.get('API_BASE_HOST') is None:
+        os.environ['API_BASE_HOST'] = API_BASE_HOST
     if "http://localhost" in os.environ.get("API_BASE_HOST"):
         token['access_token'] = "DUMMY_TOKEN_FOR_MOCK"
-    else:
+    elif module.params['openshift_offline_token'] is not None:
         token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
+    else:
+        token['access_token'] = get_offline_token(None)
 
     api_base_host = os.getenv("API_BASE_HOST") 
     if api_base_host is None:
@@ -195,13 +199,10 @@ def run_module():
                 except Exception as e:
                     module.fail_json(msg=f'Failed to create Access Control List binding with exception: {e}', **result)
                 
-    
-    # Check for kafka_admin_url to be used to create topic
     if (module.params['kafka_admin_url'] is None) or (module.params['kafka_admin_url'] == ""):
         get_kafka_admin_url(get_kafka_mgmt_client())
-    else:
-        configuration.host = module.params['kafka_admin_url']
-            
+    
+    configuration.host = result['kafka_admin_url']    
     configuration.access_token = token["access_token"]
     with rhoas_kafka_instance_sdk.ApiClient(configuration) as api_client:
         api_instance = acls_api.AclsApi(api_client)
