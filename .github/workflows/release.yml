@@ -21,7 +21,9 @@ jobs:
       - name: Install Ansible
         run: pip install ansible
       - name: Install yq
-        run: pip install yq
+        run: |
+          sudo snap install yq
+          yq --version
       - name: Bump version
         run: yq -i '.version = "${{ env.RELEASE_VERSION }}"' galaxy.yml
       - name: Build collection
