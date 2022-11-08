@@ -23,4 +23,4 @@ jobs:
       - name: Build the collection
         run: ansible-galaxy collection build --force
       - name: Publish the collection
-        run: ansible-galaxy collection publish rhoas-rhoas-${{ env.RELEASE_VERSION }}.tar.gz --token ${{ secrets.ANSIBLE_GALAXY_API_KEY }} --force --verbose
+        run: ansible-galaxy collection publish rhoas-rhoas-${{ env.RELEASE_VERSION }}.tar.gz --token ${{ secrets.ANSIBLE_GALAXY_API_KEY }}
