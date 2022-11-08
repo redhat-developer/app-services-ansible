@@ -25,7 +25,9 @@ jobs:
         run: pip install ansible
       - name: Install dependencies
         run: |
-          pip install yq
+          sudo apt-get install wget
+          wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY}.tar.gz -O - |\
+          tar xz && mv ${BINARY} /usr/bin/yq          
           yq --version
           pip install python-dotenv
           pip install rhoas-sdks --force-reinstall
