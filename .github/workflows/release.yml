@@ -30,7 +30,9 @@ jobs:
           pip install python-dotenv
           pip install rhoas-sdks --force-reinstall
       - name: Bump version
-        run: yq e -y -i '.version = "${{ env.RELEASE_VERSION }}"' galaxy.yml
+        run: yq -i '.version = "${{ env.RELEASE_VERSION }}"' galaxy.yml
+      - name: Debugging with tmate
+        uses: mxschmitt/action-tmate@v3.13
       - name: Build collection
         run: ansible-galaxy collection build 
       - name: Publish the collection
