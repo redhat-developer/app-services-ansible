@@ -24,8 +24,10 @@ jobs:
         run: |
           sudo snap install yq
           yq --version
+          pip install python-dotenv
+          pip install rhoas-sdks --force-reinstall
       - name: Bump version
-        run: yq -i '.version = "${{ env.RELEASE_VERSION }}"' galaxy.yml
+        run: yq e -i '.version = "${{ env.RELEASE_VERSION }}"' galaxy.yml
       - name: Build collection
         run: ansible-galaxy collection build 
       - name: Publish the collection
