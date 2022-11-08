@@ -129,6 +129,7 @@ def run_module():
         retention_period_ms=dict(type='str', required=False),
         cleanup_policy=dict(type='str', required=False),
         openshift_offline_token=dict(type='str', required=False),
+        local_dev_mock=dict(type='bool', required=False)
     )
 
     result = dict(
@@ -150,10 +151,14 @@ def run_module():
         module.exit_json(**result)
 
     token = {}
+    if os.environ.get('API_BASE_HOST') is None:
+        os.environ['API_BASE_HOST'] = API_BASE_HOST
     if "http://localhost" in os.environ.get("API_BASE_HOST"):
         token['access_token'] = "DUMMY_TOKEN_FOR_MOCK"
-    else:
+    elif module.params['openshift_offline_token'] is not None:
         token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
+    else:
+        token['access_token'] = get_offline_token(None)
         
     api_base_host = os.getenv("API_BASE_HOST") 
     if api_base_host is None:
@@ -187,10 +192,11 @@ def run_module():
                     module.fail_json(msg=f'Failed to create kafka topic with API exception code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
                 except Exception as e:
                     module.fail_json(msg=f'Failed to create kafka topic with general exception: `{e}`.')
-                
-    # Check for kafka_admin_url to be used to create topic
+    
     if (module.params['kafka_admin_url'] is None) or (module.params['kafka_admin_url'] == ""):
         get_kafka_admin_url(get_kafka_mgmt_client())
+    else:
+        configuration.host = module.params['kafka_admin_url']
 
     configuration = rhoas_kafka_instance_sdk.Configuration()
     configuration.host = result['kafka_admin_url']
@@ -219,7 +225,7 @@ def run_module():
             config_entry_dict = { "cleanup.policy": cleanup_policy}
             config_entry_flag = True
             
-        if module.params['partitions'] is not None:
+        if module.params['partitions'] is not None and type(module.params['partitions']) is int:
             number_of_partitions=module.params['partitions']
             config_entry_flag = True
           
@@ -228,7 +234,6 @@ def run_module():
             new_topic_input = NewTopicInput(
                 name=module.params['topic_name'],
                 settings=TopicSettings(
-                    num_partitions=number_of_partitions,
                 )
             )
         else:
