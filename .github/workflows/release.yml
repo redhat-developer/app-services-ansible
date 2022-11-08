@@ -23,9 +23,9 @@ jobs:
           python-version: 3.9
       - name: Install Ansible
         run: pip install ansible
-      - name: Install yq
+      - name: Install dependencies
         run: |
-          sudo snap install yq
+          pip install yq
           yq --version
           pip install python-dotenv
           pip install rhoas-sdks --force-reinstall
