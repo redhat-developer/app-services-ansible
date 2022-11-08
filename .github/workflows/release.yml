@@ -20,7 +20,11 @@ jobs:
           python-version: 3.9
       - name: Install Ansible
         run: pip install ansible
-      - name: Build the collection
-        run: ansible-galaxy collection build --force
+      - name: Build and Deploy Collection
+        uses: artis3n/ansible_galaxy_collection@v2.8.2
+        with:
+          api_key: '${{ secrets.ANSIBLE_GALAXY_API_KEY }}'
+          galaxy_version: '${{ env.RELEASE_VERSION }}'
+          publish: false
       - name: Publish the collection
-        run: ansible-galaxy collection publish rhoas-rhoas-${{ env.RELEASE_VERSION }}.tar.gz --token ${{ secrets.ANSIBLE_GALAXY_TOKEN }} --force --verbose
+        run: ansible-galaxy collection publish rhoas-rhoas-${{ env.RELEASE_VERSION }}.tar.gz --token ${{ secrets.ANSIBLE_GALAXY_API_KEY }}
