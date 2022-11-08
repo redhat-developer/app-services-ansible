@@ -20,11 +20,11 @@ jobs:
           python-version: 3.9
       - name: Install Ansible
         run: pip install ansible
-      - name: Build and Deploy Collection
-        uses: artis3n/ansible_galaxy_collection@v2.8.2
-        with:
-          api_key: '${{ secrets.ANSIBLE_GALAXY_API_KEY }}'
-          galaxy_version: '${{ env.RELEASE_VERSION }}'
-          publish: false
+      - name: Install yq
+        run: pip install yq
+      - name: Bump version
+        run: yq -i '.version = "${{ env.RELEASE_VERSION }}"' galaxy.yml
+      - name: Build collection
+        run: ansible-galaxy collection build 
       - name: Publish the collection
         run: ansible-galaxy collection publish rhoas-rhoas-${{ env.RELEASE_VERSION }}.tar.gz --token ${{ secrets.ANSIBLE_GALAXY_API_KEY }}
