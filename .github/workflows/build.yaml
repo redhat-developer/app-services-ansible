@@ -1,13 +1,13 @@
 name: Build
 on:
-#   push:
-#     branches: [main]
-#   pull_request:
-#     branches: [main]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 env:
   API_BASE_HOST: http://localhost:8000
-  SSO_BASE_URL: http://localhost:8000
+  SSO_BASE_URL: http://localhost:8000/api/service_accounts/v1
   OFFLINE_TOKEN: ${{ secrets.MOCK_OFFLINE_TOKEN }}
 jobs:
   build:
@@ -37,5 +37,5 @@ jobs:
       - name: Run playbook
         uses: dawidd6/action-ansible-playbook@v2
         with:
-          playbook: run_test.yml
+          playbook: run_rhosak_test.yml
           directory: ./
