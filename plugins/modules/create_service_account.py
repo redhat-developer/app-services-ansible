@@ -14,11 +14,11 @@ DOCUMENTATION = r'''
 ---
 module: create_service_account
 
-short_description: Create a Service Account for use with Red Hat Openshift Application Services 
+short_description: Create a Service Account for use with Red Hat Openshift Application Services
 
-version_added: "0.1.0-alpha"
+version_added: "0.1.1"
 
-description: Create a Service Account for use with Red Hat Openshift Application Services 
+description: Create a Service Account for use with Red Hat Openshift Application Services
 
 options:
     name:
@@ -30,10 +30,10 @@ options:
         required: true
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: openshift_offline_token is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the OFFLINE_TOKEN environment variable will be used.
         required: false
         type: str
- 
+
 extends_documentation_fragment:
     - rhoas.rhoas.rhoas_doc_fragment
 
@@ -62,11 +62,11 @@ message:
     description: The output error / exception message that is returned in the case the module generates an error / exception.
     type: dict
     returned: In case of error / exception.
-srvce_acc_resp_obj: 
+srvce_acc_resp_obj:
     description: The service account response object.
     type: dict
     returned: If service account is created successfully.
-    sample: Client ID and Client Secret of the service account. 
+    sample: Client ID and Client Secret of the service account.
 client_id:
     description: The client id of the service account.
     type: str
@@ -124,17 +124,17 @@ def run_module():
         token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
     else:
         token['access_token'] = get_offline_token(None)
-    
-   
-    sso_base_host = os.getenv("SSO_BASE_HOST") 
+
+
+    sso_base_host = os.getenv("SSO_BASE_HOST")
     if sso_base_host is None:
         result['message'] = 'cannot find SSO_BASE_HOST in .env file'
         sso_base_host = SSO_BASE_HOST
-   
+
     configuration = rhoas_service_accounts_mgmt_sdk.Configuration(
-            host = sso_base_host,    
+            host = sso_base_host,
     )
-    
+
     configuration.access_token = token["access_token"]
 
     with rhoas_service_accounts_mgmt_sdk.ApiClient(configuration) as api_client:
@@ -144,7 +144,7 @@ def run_module():
             service_account_create_request_data = ServiceAccountCreateRequestData(
                 name=module.params['name'],
                 description=module.params['description'],
-            ) 
+            )
             api_response = api_instance.create_service_account(service_account_create_request_data, async_req=True)
             api_response = api_response.get().to_dict()
             result['srvce_acc_resp_obj'] = {
@@ -153,7 +153,7 @@ def run_module():
             }
             result['client_id'] = api_response['client_id']
             result['client_secret'] = api_response['secret']
-            
+
             result['changed'] = True
 
             module.exit_json(**result)
@@ -162,7 +162,7 @@ def run_module():
             module.fail_json(msg=f'Failed to create kafka instance, API exception: {e}', **result)
         except Exception as e:
             result['message'] = e
-            module.fail_json(msg='Failed to create kafka instance, with general exception', **result)   
+            module.fail_json(msg='Failed to create kafka instance, with general exception', **result)
 
 def main():
     run_module()

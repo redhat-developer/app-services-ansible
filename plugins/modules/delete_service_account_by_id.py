@@ -14,9 +14,9 @@ DOCUMENTATION = r'''
 ---
 module: delete_service_account_by_id
 
-short_description: Delete a Service Account for use with Red Hat Openshift Application Services.
+short_description: Delete a Service Account for use with Red Hat OpenShift Application Services.
 
-version_added: "0.1.0-alpha"
+version_added: "0.1.0"
 
 description: Delete a Service Account for use with Red Hat Openshift Application Services.
 
@@ -26,10 +26,10 @@ options:
         required: true
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: openshift_offline_token is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
         required: false
         type: str
-        
+
 extends_documentation_fragment:
     - rhoas.rhoas.rhoas_doc_fragment
 
@@ -47,7 +47,7 @@ EXAMPLES = r'''
 RETURN = r'''
 original_message:
     description: The original params that were passed in to be deleted.
-    type: dict 
+    type: dict
     returned: always in case of success
 message:
     description: The output error / exception message that is returned in the case the module generates an error / exception.
@@ -71,7 +71,7 @@ def run_module():
         service_account_id=dict(type='str', required=True),
         openshift_offline_token=dict(type='str', required=False),
     )
-    
+
     result = dict(
         changed=False,
         original_message='',
@@ -97,9 +97,9 @@ def run_module():
         token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
     else:
         token['access_token'] = get_offline_token(None)
-    
+
     configuration = rhoas_service_accounts_mgmt_sdk.Configuration()
-    sso_base_host = os.getenv("SSO_BASE_HOST") 
+    sso_base_host = os.getenv("SSO_BASE_HOST")
     if sso_base_host is None:
         result['env_url_error'] = 'cannot find SSO_BASE_HOST in .env file, using default url values instead'
         sso_base_host = SSO_BASE_HOST

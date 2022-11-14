@@ -17,7 +17,7 @@ module: create_kafka
 
 short_description: Create Red Hat OpenShift Streams for Apache Kafka Instance.
 
-version_added: "0.1.1-aplha"
+version_added: "0.1.1"
 
 description: Create Red Hat OpenShift Streams for Apache Kafka Instance.
 
@@ -28,7 +28,7 @@ options:
         type: str
     cloud_provider:
         description: Cloud provider for the Kafka instance.
-        required: true 
+        required: true
         type: str
     region:
         description: Region that the Kafka instance is to be situated in.
@@ -45,34 +45,34 @@ options:
         type: str
     billing_cloud_account_id:
         description: Billing cloud account id for the Kafka instance.
-        required: false 
+        required: false
         type: str
     marketplace:
         description: Marketplace for the Kafka instance.
-        required: false 
+        required: false
         type: str
     billing_model:
         description: Billing model for the Kafka instance.
-        required: true 
+        required: true
         type: str
     instance_type:
         description: Instance type for the Kafka instance.
         required: false
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: openshift_offline_token is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the OFFLINE_TOKEN environment variable will be used.
         required: false
         type: str
- 
+
 extends_documentation_fragment:
     - rhoas.rhoas.rhoas_doc_fragment
-    
+
 author:
     - Red Hat Developer
 '''
 
 EXAMPLES = r'''
-# Pass in a Kakfa request object 
+# Pass in a Kakfa request object
   - name: Create kafka
     redhat.rhoask.create_kafka:
       name: "kafka_name"
@@ -84,7 +84,7 @@ EXAMPLES = r'''
       billing_cloud_account_id: "123456789"
       openshift_offline_token: "OPENSHIFT_OFFLINE_TOKEN"
     register:
-      kafka_req_resp 
+      kafka_req_resp
 '''
 
 RETURN = r'''
@@ -167,17 +167,17 @@ def run_module():
         token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
     else:
         token['access_token'] = get_offline_token(None)
-        
-    api_base_host = os.getenv("API_BASE_HOST") 
+
+    api_base_host = os.getenv("API_BASE_HOST")
     if api_base_host is None:
         result['env_url_error'] = 'cannot find API_BASE_HOST in .env file, using default url values instead'
         api_base_host = API_BASE_HOST
     configuration = rhoas_kafka_mgmt_sdk.Configuration(
         host = api_base_host,
     )
-    
+
     configuration.access_token = token["access_token"]
-    
+
     def check_kafka_in_ready_state(kafka_mgmt_api_instance, retries = 10, backoff_in_seconds = 15):
         attempt = 0
         # Check for kafka_admin_url to be used to create topic
@@ -192,7 +192,7 @@ def run_module():
                         result['kafka_admin_url'] = kafka_mgmt_api_response['admin_api_server_url']
                         result['kafka_state'] = kafka_mgmt_api_response['status']
                         result['kafka_admin_resp_obj'] = kafka_mgmt_api_response.to_dict()
-                        
+
                     except rhoas_kafka_mgmt_sdk.ApiException as e:
                         rb = json.loads(e.body)
                         module.fail_json(msg=f'Failed to create new kafka instance with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
@@ -202,7 +202,7 @@ def run_module():
                 sleep = (backoff_in_seconds * attempt)
                 time.sleep(sleep)
                 attempt += 1
-                
+
     # Enter a context with an instance of the API client
     with rhoas_kafka_mgmt_sdk.ApiClient(configuration) as api_client:
         # Create an instance of the API class
@@ -217,7 +217,7 @@ def run_module():
             billing_cloud_account_id=module.params['billing_cloud_account_id'],
             marketplace=module.params['marketplace'],
             billing_model=module.params['billing_model'],
-        ) 
+        )
         try:
             api_response = api_instance.create_kafka(_async, kafka_request_payload, async_req=True)
             kafka_req_resp = api_response.get(20000)
@@ -226,9 +226,9 @@ def run_module():
                 result['original_message'] = kafka_req_resp.to_dict()
                 result['kafka_id'] = kafka_req_resp['id']
             check_kafka_in_ready_state(api_instance)
-            
+
             result['changed'] = True
-            # exit the module and return the state 
+            # exit the module and return the state
             module.exit_json(**result)
         except rhoas_kafka_mgmt_sdk.ApiException as e:
             rb = json.loads(e.body)

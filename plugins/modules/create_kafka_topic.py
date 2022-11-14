@@ -16,7 +16,7 @@ module: create_kafka_topic
 
 short_description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
-version_added: "0.1.0-alpha"
+version_added: 0.1.1
 
 description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
@@ -50,7 +50,7 @@ options:
         required: false
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: openshift_offline_token is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the OFFLINE_TOKEN environment variable will be used.
         required: false
         type: str
  

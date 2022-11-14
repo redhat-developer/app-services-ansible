@@ -1,6 +1,7 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
-
+# Apache License, v2.0 (https://www.apache.org/licenses/LICENSE-2.0)
 from __future__ import (absolute_import, division, print_function)
 import json
 import os
@@ -11,13 +12,13 @@ from dotenv import load_dotenv
 
 DOCUMENTATION = r'''
 ---
-module: delete_kafka_by_id 
+module: delete_kafka_by_id
 
 short_description: This module deletes a Red Hat OpenShift Streams for Apache Kafka Instance by ID.
 
-version_added: "0.1.0-alpha"
+version_added: "0.1.0"
 
-short_description: This module deletes a Red Hat OpenShift Streams for Apache Kafka Instance by ID.
+description: This module deletes a Red Hat OpenShift Streams for Apache Kafka Instance by ID.
 
 options:
     kakfa_id:
@@ -25,10 +26,10 @@ options:
         required: true
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: openshift_offline_token is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the OFFLINE_TOKEN environment variable will be used.
         required: false
         type: str
- 
+
 extends_documentation_fragment:
     - rhoas.rhoas.rhoas_doc_fragment
 
@@ -96,17 +97,17 @@ def run_module():
         token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
     else:
         token['access_token'] = get_offline_token(None)
-    
-    api_base_host = os.getenv("API_BASE_HOST") 
+
+    api_base_host = os.getenv("API_BASE_HOST")
     if api_base_host is None:
         result['env_url_error'] = 'cannot find API_BASE_HOST in .env file, using default url values instead'
         api_base_host = API_BASE_HOST
     configuration = rhoas_kafka_mgmt_sdk.Configuration(
         host = api_base_host
     )
-    
+
     configuration.access_token = token["access_token"]
-    
+
     with rhoas_kafka_mgmt_sdk.ApiClient(configuration) as api_client:
         # Create an instance of the API class
         api_instance = default_api.DefaultApi(api_client)
@@ -117,8 +118,8 @@ def run_module():
             result['original_message'] = f'Kafka instance with ID: {id} set for deletion'
             result['message'] = "Kafka instance deleted"
             result['changed'] = True
-            
-            # exit the module and return the state 
+
+            # exit the module and return the state
             module.exit_json(**result)
         except rhoas_kafka_mgmt_sdk.ApiException as e:
             print("Exception when calling DefaultApi -> delete_kafka_by_id: %s\n" % e)
