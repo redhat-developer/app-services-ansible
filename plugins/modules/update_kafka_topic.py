@@ -16,7 +16,7 @@ module: update_kafka_topic
 
 short_description: Update a topic's configuration settings on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
-version_added: "0.1.0-alpha"
+version_added: "0.1.1"
 
 description: Update a topic's configuration settings on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
@@ -29,7 +29,7 @@ options:
         description: ID of the Kafka instance.
         required: true
         type: str
-    kafka_admin_url: 
+    kafka_admin_url:
         description: Admin URL of the Kafka instance.
         required: false
         type: str
@@ -50,13 +50,13 @@ options:
         required: false
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: openshift_offline_token is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the OFFLINE_TOKEN environment variable will be used.
         required: false
         type: str
- 
+
 extends_documentation_fragment:
     - rhoas.rhoas.rhoas_doc_fragment
-    
+
 author:
     - Red Hat Developer
 '''
@@ -80,7 +80,7 @@ RETURN = r'''
 # These are examples of possible return values, and in general should use other names for return values.
 original_message:
     description: The original params that were passed in.
-    type: dict 
+    type: dict
     returned: always in case of successful execution
 message:
     description: A message detailing topic updated successfully.
@@ -88,7 +88,7 @@ message:
     returned: always in case of successful execution
     sample: "Topic updated successfully"
 update_topic_res_obj:
-    description: The configuration of the topic that was updated 
+    description: The configuration of the topic that was updated
     type: dict
     returned: always upon successful update of a topic
 kafka_admin_resp_obj:
@@ -156,28 +156,28 @@ def run_module():
         token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
     else:
         token['access_token'] = get_offline_token(None)
-        
-    api_base_host = os.getenv("API_BASE_HOST") 
+
+    api_base_host = os.getenv("API_BASE_HOST")
     if api_base_host is None:
         result['env_url_error'] = 'cannot find API_BASE_HOST in .env file, using default url values instead'
         api_base_host = API_BASE_HOST
     kafka_mgmt_config = rhoas_kafka_mgmt_sdk.Configuration(
         host = api_base_host,
     )
- 
+
     kafka_mgmt_config.access_token = token["access_token"]
-    
+
     def get_kafka_mgmt_client():
         with rhoas_kafka_mgmt_sdk.ApiClient(kafka_mgmt_config) as kafka_mgmt_api_client:
             # Update an instance of the API class
             kafka_mgmt_api_instance = default_api.DefaultApi(kafka_mgmt_api_client)
             return kafka_mgmt_api_instance
-        
+
     def get_kafka_admin_url(kafka_mgmt_api_instance):
         # Check for kafka_admin_url to be used to update topic
         while (result['kafka_admin_url'] == ""):
             # Enter a context with an instance of the API client
-                kafka_id = module.params['kafka_id'] 
+                kafka_id = module.params['kafka_id']
 
                 try:
                     kafka_mgmt_api_response = kafka_mgmt_api_instance.get_kafka_by_id(kafka_id)
@@ -188,7 +188,7 @@ def run_module():
                     module.fail_json(msg=f'Failed to get kafka admin URL with API exception code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
                 except Exception as e:
                     module.fail_json(msg=f'Failed to get kafka admin URL with general exception: `{e}`.')
-                
+
     # Check for kafka_admin_url to be used to update topic
     if (module.params['kafka_admin_url'] is None) or (module.params['kafka_admin_url'] == ""):
         get_kafka_admin_url(get_kafka_mgmt_client())
@@ -196,29 +196,29 @@ def run_module():
     configuration = rhoas_kafka_instance_sdk.Configuration()
     configuration.host = result['kafka_admin_url']
     configuration.access_token = token["access_token"]
-    
+
     with rhoas_kafka_instance_sdk.ApiClient(configuration) as api_client:
         api_instance = topics_api.TopicsApi(api_client)
-        
-        number_of_partitions = 1 
+
+        number_of_partitions = 1
         config_entry_dict = {}
-        
-        #check for user input variables 
+
+        #check for user input variables
         if module.params['retention_size_bytes'] is not None:
             retention_size_bytes=module.params['retention_size_bytes']
             config_entry_dict = { "retention.bytes": retention_size_bytes}
-            
+
         if module.params['retention_period_ms'] is not None:
             retention_period_ms=module.params['retention_period_ms']
             config_entry_dict = { "retention.ms": retention_period_ms}
-            
+
         if module.params['cleanup_policy'] is not None:
             cleanup_policy=module.params['cleanup_policy']
             config_entry_dict = { "cleanup.policy": cleanup_policy}
-            
+
         if module.params['partitions'] is not None:
             number_of_partitions=module.params['partitions']
-          
+
         config = [ConfigEntry(key=key, value=value) for key, value in config_entry_dict.items()]
         topic_name=module.params['topic_name']
         topic_settings=TopicSettings(

@@ -16,7 +16,7 @@ module: delete_kafka_topic
 
 short_description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
-version_added: "0.1.0-alpha"
+version_added: "0.1.0"
 
 description: Create a topic on a Red Hat OpenShift Streams for Apache Kafka Instance.
 
@@ -29,18 +29,18 @@ options:
         description: ID of the Kafka instance.
         required: true
         type: str
-    kafka_admin_url: 
+    kafka_admin_url:
         description: Admin URL of the Kafka instance. This URL is used to communicate with the Kafka instance.
         required: false
         type: str
     openshift_offline_token:
-        description: `openshift_offline_token` is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the `OFFLINE_TOKEN` environment variable will be used.
+        description: openshift_offline_token is the OpenShift Offline Token that is used for authentication to enable communication with the Kafka Management API. If not provided, the OFFLINE_TOKEN environment variable will be used.
         required: false
         type: str
- 
+
 extends_documentation_fragment:
     - rhoas.rhoas.rhoas_doc_fragment
- 
+
 author:
     - Red Hat Developer
 '''
@@ -58,7 +58,7 @@ RETURN = r'''
 # These are examples of possible return values, and in general should use other names for return values.
 original_message:
     description: The original params that were passed in.
-    type: dict 
+    type: dict
     returned: In the case of successful execution.
 message:
     description: A message detailing topic to be deleted.
@@ -125,26 +125,26 @@ def run_module():
         token['access_token'] = get_offline_token(module.params['openshift_offline_token'])
     else:
         token['access_token'] = get_offline_token(None)
-        
-    api_base_host = os.getenv("API_BASE_HOST") 
+
+    api_base_host = os.getenv("API_BASE_HOST")
     if api_base_host is None:
         result['env_url_error'] = 'cannot find API_BASE_HOST in .env file, using default url values instead'
         api_base_host = API_BASE_HOST
     kafka_mgmt_config = rhoas_kafka_mgmt_sdk.Configuration(
         host = api_base_host,
     )
- 
+
     kafka_mgmt_config.access_token = token["access_token"]
-    
+
     def get_kafka_mgmt_client():
         with rhoas_kafka_mgmt_sdk.ApiClient(kafka_mgmt_config) as kafka_mgmt_api_client:
             kafka_mgmt_api_instance = default_api.DefaultApi(kafka_mgmt_api_client)
             return kafka_mgmt_api_instance
-        
+
     def get_kafka_admin_url(kafka_mgmt_api_instance):
         # Check for kafka_admin_url to be used to delete topic
         while (result['kafka_admin_url'] == ""):
-                kafka_id = module.params['kafka_id'] 
+                kafka_id = module.params['kafka_id']
 
                 try:
                     kafka_mgmt_api_response = kafka_mgmt_api_instance.get_kafka_by_id(kafka_id)
@@ -156,17 +156,17 @@ def run_module():
                     module.fail_json(msg=f'Failed to delete kafka topic with error code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
                 except Exception as e:
                     module.fail_json(msg=f'Failed to delete kafka topic with error: `{e}`.')
-                
+
     # Check for kafka_admin_url to be used to delete topic
     if (module.params['kafka_admin_url'] is None) or (module.params['kafka_admin_url'] == ""):
         get_kafka_admin_url(get_kafka_mgmt_client())
 
     configuration.access_token = token["access_token"]
-    
+
     with rhoas_kafka_instance_sdk.ApiClient(configuration) as api_client:
         api_instance = topics_api.TopicsApi(api_client)
-        topic_name = module.params['topic_name'] 
-          
+        topic_name = module.params['topic_name']
+
         try:
             api_instance.delete_topic(topic_name)
             result['changed'] = True
