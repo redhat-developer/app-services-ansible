@@ -14,7 +14,7 @@ DOCUMENTATION = r'''
 ---
 module: delete_service_account_by_id
 
-short_description: Delete a Service Account for use with Red Hat Openshift Application Services.
+short_description: Delete a Service Account for use with Red Hat OpenShift Application Services.
 
 version_added: "0.1.0"
 
