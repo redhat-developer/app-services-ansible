@@ -32,7 +32,7 @@ Once the prerequisites and the RHOAS collection are installed the collection can
 
 ## Using collection
 
-Once the collection is install, documentation for each module can be found by running the following command:
+Once the collection is installed, documentation for each module can be found by running the following command:
 
 ```shell
 ansible-doc rhoas.rhoas.<module_name>
