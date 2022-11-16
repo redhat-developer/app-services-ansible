@@ -74,7 +74,7 @@ author:
 EXAMPLES = r'''
 # Pass in a Kakfa request object
   - name: Create kafka
-    redhat.rhoask.create_kafka:
+    rhoas.rhoas.create_kafka:
       name: "kafka_name"
       instance_type: "x1"
       billing_model: "standard"
