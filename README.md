@@ -48,7 +48,13 @@ This will output the documentation for the `create_kafka` module. It shows the r
 
 An example Ansible playbook which demonstrates the RHOAS modules abilities can be [found here](https://github.com/redhat-developer/app-services-ansible/blob/2a47a44a92d871f99bba2ced38ff770f00e3c3da/rhoas_test.yml).
 
-The playbook and all modules require an 'OFFLINE_TOKEN' to be used with for authentication with the Red Hat OpenShift Application Services API. The token can be passed in like this:
+The playbook and all modules require an 'OFFLINE_TOKEN' to be used with for authentication with the Red Hat OpenShift Application Services API. The token can be passed in via a traditional Ansible command like this:
+
+```shell
+ansible localhost -m rhoas.rhoas.create_kafka -a 'name=struttin billing_model=standard cloud_provider=aws plan="developer.x1" region="us-east-1" openshift_offline_token=<OFFLINE_TOKEN>'
+```
+
+Or passed in into the playbook as a variable:
 
 ```yaml
 ...
@@ -70,7 +76,13 @@ They are:
 
 If neither of these environment variables are set, the collection will default to the URLs as noted in the examples.
 
-The collection can be used in a playbook like this:
+The collection can be used via Ansible CLI: 
+
+```shell
+ansible localhost -m rhoas.rhoas.create_kafka -a 'name=unique-kafka-name billing_model=standard cloud_provider=aws plan="developer.x1" region="us-east-1" openshift_offline_token=<OFFLINE_TOKEN>'
+```
+
+Or in a playbook like this:
 
 ```shell
 ansible-playbook rhoas_test.yml
