@@ -18,7 +18,7 @@
   - name: Debug create kafka
     debug:
       msg: "{{ kafka_req_resp_obj['kafka_id'] }}"
-        - name: Get kafkas
+  - name: Get kafkas
     rhoas.rhoas.get_kafkas:
     register:
       kafkas_resp_obj
@@ -128,5 +128,6 @@
     rhoas.rhoas.delete_kafka_by_id:
       kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
       # to hardcode the kafka_id uncomment and use the following line
-
+      
       # openshift_offline_token: "OFFLINE_TOKEN"
+
