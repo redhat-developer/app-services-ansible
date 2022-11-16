@@ -51,7 +51,7 @@ An example Ansible playbook which demonstrates the RHOAS modules abilities can b
 The playbook and all modules require an 'OFFLINE_TOKEN' to be used with for authentication with the Red Hat OpenShift Application Services API. The token can be passed in via a traditional Ansible command like this:
 
 ```shell
-ansible localhost -m rhoas.rhoas.create_kafka -a 'name=struttin billing_model=standard cloud_provider=aws plan="developer.x1" region="us-east-1" openshift_offline_token=<OFFLINE_TOKEN>'
+ansible localhost -m rhoas.rhoas.create_kafka -a 'name=unique-kafka-name billing_model=standard cloud_provider=aws plan="developer.x1" region="us-east-1" openshift_offline_token=<OFFLINE_TOKEN>'
 ```
 
 Or passed in into the playbook as a variable:
