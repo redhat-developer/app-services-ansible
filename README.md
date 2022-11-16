@@ -13,7 +13,7 @@ pip install rhoas-sdks --force-reinstall
 pip install python-dotenv
 ```
 
-- Not a prerequisite but it is highly recommended to use a Python virtual environment. This collection will work best if it used within one. To create and activate a Python virtual environment, run the following command:
+- Not a prerequisite but it is highly recommended to use a Python virtual environment. This collection will work best if it is used within one. To create and activate a Python virtual environment, run the following command:
 
 ```shell
 python3 -m venv rhoas

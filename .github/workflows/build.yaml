@@ -1,9 +1,9 @@
 name: Build
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  # push:
+  #  branches: [main]
+  #pull_request:
+   # branches: [main]
   workflow_dispatch:
 env:
   API_BASE_HOST: http://localhost:8000
@@ -34,6 +34,8 @@ jobs:
         run: |
           ansible-galaxy collection build .
           ansible-galaxy collection install rhoas*.tar.gz -p /home/runner/.ansible/collections
+      - name: Debugging with tmate
+        uses: mxschmitt/action-tmate@v3.13
       - name: Run playbook
         uses: dawidd6/action-ansible-playbook@v2
         with:
