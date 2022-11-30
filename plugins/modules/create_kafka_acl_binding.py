@@ -182,7 +182,7 @@ def run_module():
             kafka_mgmt_api_instance = default_api.DefaultApi(kafka_mgmt_api_client)
             return kafka_mgmt_api_instance
 
-    def get_kafka_admin_url(kafka_mgmt_api_instance):
+    def get_kafka_admin_url(kafka_mgmt_api_instance, configuration):
         # Check for kafka_admin_url to be used to create topic
         while (result['kafka_admin_url'] == "") or (result['kafka_admin_url'] == None):
             # Enter a context with an instance of the API client
@@ -193,7 +193,6 @@ def run_module():
                     kafka_mgmt_api_response
                     result['kafka_admin_url'] = kafka_mgmt_api_response['admin_api_server_url']
                     result['kafka_admin_resp_obj'] = kafka_mgmt_api_response.to_dict()
-                    configuration.host = result['kafka_admin_url']
                 except rhoas_kafka_mgmt_sdk.ApiException as e:
                     rb = json.loads(e.body)
                     module.fail_json(msg=f'Failed to create Access Control List binding with API exception code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.', **result)
@@ -202,6 +201,8 @@ def run_module():
 
     if (module.params['kafka_admin_url'] is None) or (module.params['kafka_admin_url'] == ""):
         get_kafka_admin_url(get_kafka_mgmt_client())
+    else:
+        result['kafka_admin_url'] = module.params['kafka_admin_url']
 
     configuration.host = result['kafka_admin_url']
     configuration.access_token = token["access_token"]
@@ -239,7 +240,7 @@ def run_module():
             api_response = api_instance.create_acl(acl_binding)
             if api_response is None:
                 result['message'] = "ACL Binding Created"
-            result['changed'] = True
+                result['changed'] = True
 
             module.exit_json(**result)
         except rhoas_kafka_instance_sdk.ApiException as e:
