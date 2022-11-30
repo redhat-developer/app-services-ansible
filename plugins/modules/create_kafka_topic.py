@@ -176,7 +176,7 @@ def run_module():
             kafka_mgmt_api_instance = default_api.DefaultApi(kafka_mgmt_api_client)
             return kafka_mgmt_api_instance
         
-    def get_kafka_admin_url(kafka_mgmt_api_instance):
+    def get_kafka_admin_url(kafka_mgmt_api_instance, configuration):
         # Check for kafka_admin_url to be used to create topic
         while (result['kafka_admin_url'] == ""):
             # Enter a context with an instance of the API client
@@ -184,22 +184,21 @@ def run_module():
 
                 try:
                     kafka_mgmt_api_response = kafka_mgmt_api_instance.get_kafka_by_id(kafka_id)
-                    kafka_mgmt_api_response
                     result['kafka_admin_url'] = kafka_mgmt_api_response['admin_api_server_url']
                     result['kafka_admin_resp_obj'] = kafka_mgmt_api_response.to_dict()
+                    configuration.host = result['kafka_admin_url']
                 except rhoas_kafka_mgmt_sdk.ApiException as e:
                     rb = json.loads(e.body)
                     module.fail_json(msg=f'Failed to create kafka topic with API exception code: `{rb["code"]}`. The reason of failure: `{rb["reason"]}`.')
                 except Exception as e:
                     module.fail_json(msg=f'Failed to create kafka topic with general exception: `{e}`.')
     
+    configuration = rhoas_kafka_instance_sdk.Configuration()
     if (module.params['kafka_admin_url'] is None) or (module.params['kafka_admin_url'] == ""):
-        get_kafka_admin_url(get_kafka_mgmt_client())
+        get_kafka_admin_url(get_kafka_mgmt_client(), configuration)
     else:
         configuration.host = module.params['kafka_admin_url']
 
-    configuration = rhoas_kafka_instance_sdk.Configuration()
-    configuration.host = result['kafka_admin_url']
     configuration.access_token = token["access_token"]
     
     with rhoas_kafka_instance_sdk.ApiClient(configuration) as api_client:
