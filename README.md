@@ -102,3 +102,33 @@ This playbook, if run as is, will do the following:
 - Deprovision the Red Hat OpenShift Streams for Apache Kafka instance.
 
 The playbook will then proceed to delete the created resources and as such, some alteration of the playbook will be required to keep the resources created.
+
+## Testing framework
+
+There are tests created under [`tests/test_suite`](tests/test_suite) to test the modules in [`plugins/modules`](plugins/modules). 
+
+### Implementation
+
+1. Config test evironment
+   1. Install modules from `requirements.txt` file
+   1. Build RHOAS Ansible collection locally from the code in this repo
+   1. Install Ansible collection
+1. Run Tests
+   1. Set `OFFLINE_TOKEN`
+   1. Set testing environment: `prod` or `stage`
+   1. Execute tests using `pytest`
+1. Test Results:
+   - XML JUnit report
+   - pytest log file
+
+### How to execute tests
+
+Tests can be executed locally or inside a container. Container approach is recomended:
+
+1. Build the test image: `make docker/test-image/build`
+1. Execute interactive shell in the test container: `make docker/test-container/bash`
+1. Inside the test container:
+   1. Prepare and configure the environment: `./config_test_env.sh`
+   1. Set offline token: `export OFFLINE_TOKEN="ey..."`
+   1. Execute tests: `./run_tests.sh "stage" "junit_report.xml" "pytest.log"`
+
