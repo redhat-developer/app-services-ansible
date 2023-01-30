@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # init python virtual environment
-python3 -m venv env
-source env/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 
 # install pip modules on virtual environment
 pip install --upgrade pip
@@ -16,7 +16,7 @@ cp /usr/bin/python3  /usr/local/opt/python@3.9/bin/python3.9
 # set python interpreter on ansible config file
 cat << EOT >> ansible.cfg
 [defaults]
-interpreter_python=/usr/app-services-ansible/tests/env/bin/python3.9
+interpreter_python=/usr/app-services-ansible/tests/venv/bin/python3.9
 EOT
 
 # build RHOSAK Ansible module collection from local files
