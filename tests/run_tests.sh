@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source env/bin/activate
+source venv/bin/activate
 
 set -u
 trap 'echo "[ERROR] Unbound variable must be set"' EXIT
