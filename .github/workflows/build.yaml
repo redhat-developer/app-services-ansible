@@ -34,10 +34,9 @@ jobs:
         run: |
           ansible-galaxy collection build .
           ansible-galaxy collection install rhoas*.tar.gz -p /home/runner/.ansible/collections
-      - name: Debugging with tmate
-        uses: mxschmitt/action-tmate@v3.13
       - name: Run playbook
-        uses: dawidd6/action-ansible-playbook@v2
+        # v2
+        uses: dawidd6/action-ansible-playbook@5d970176ea4bfd99a3f5004d48e293fe0994eda1
         with:
           playbook: run_rhosak_test.yml
           directory: ./
