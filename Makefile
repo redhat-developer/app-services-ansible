@@ -20,7 +20,7 @@ docker/test-container/bash: ## Execute interactive shell in the test container
 	$(CONTAINER_ENGINE) run --name=$(CONTAINER_NAME) -ti $(IMAGE_NAME) /bin/bash
 
 .PHONY: docker/test-container/stop-remove
-docker/test-container/stop-remove: ## Stop and remove the test image
+docker/test-container/stop-remove: ## Stop and remove the test container
 	$(CONTAINER_ENGINE) stop $(CONTAINER_NAME)
 	$(CONTAINER_ENGINE) rm $(CONTAINER_NAME)
 
