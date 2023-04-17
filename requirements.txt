@@ -1,6 +1,6 @@
 python-keycloak==2.5.0
 ansible-core==2.13.3
-rhoas-sdks
+rhoas-sdks==0.5.0
 ansible
 python-dotenv
 
