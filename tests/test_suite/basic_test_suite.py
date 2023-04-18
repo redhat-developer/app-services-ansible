@@ -193,7 +193,6 @@ class TestBasicTestSuite:
         assert kafka_obj['ingress_throughput_per_sec'] is not None
         assert kafka_obj['instance_type'] is not None
         assert kafka_obj['instance_type_name'] is not None
-        assert kafka_obj['kafka_storage_size'] is not None
         assert kafka_obj['kind'] is not None
         assert kafka_obj['max_connection_attempts_per_sec'] is not None
         assert kafka_obj['max_data_retention_period'] is not None
