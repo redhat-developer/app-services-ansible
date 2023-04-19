@@ -16,7 +16,7 @@ pip install pytest
 rm $TESTS_PATH/ansible.cfg
 cat << EOT >> $TESTS_PATH/ansible.cfg
 [defaults]
-interpreter_python=/usr/app-services-ansible/tests/venv/bin/python3.9
+interpreter_python=$TESTS_PATH/venv/bin/python3.9
 EOT
 
 # build RHOSAK Ansible module collection from local files
