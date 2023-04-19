@@ -6,6 +6,15 @@ CONTAINER_NAME?=app-services-ansible_testing_container
 help:
 	@awk 'BEGIN {FS = ":.*##"} /^[\/a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-35s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[34m\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
+##@ Testing utilities
+.PHONY: test/config_env
+test/config_env: ## Config envrionment before running tests
+	./tests/config_test_env.sh
+
+.PHONY: test/run
+test/run: ## Run tests
+	./tests/run_tests.sh
+
 ##@ Testing targets utilities to manage Docker images and containers
 .PHONY: docker/test-image/build
 docker/test-image/build: ## Build the test image

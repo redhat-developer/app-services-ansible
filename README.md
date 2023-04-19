@@ -128,6 +128,6 @@ Tests can be executed locally or inside a container. Container approach is recom
 1. Build the test image: `make docker/test-image/build`
 1. Execute interactive shell in the test container: `make docker/test-container/bash`
 1. Inside the test container:
-   1. Prepare and configure the environment: `./config_test_env.sh`
+   1. Prepare and configure the environment: `make test/config_env`
    1. Set offline token: `export OFFLINE_TOKEN="ey..."`
-   1. Execute tests: `./run_tests.sh "stage" "junit_report.xml" "pytest.log"`
+   1. Execute tests: `make run/tests`

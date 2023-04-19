@@ -1,12 +1,13 @@
-FROM quay.io/app-sre/mk-ci-tools:latest
+FROM quay.io/mk-ci-cd/mas-ci-tools:latest
 
 USER root
 
 COPY . /usr/app-services-ansible
 
-RUN mkdir -p /usr/app-services-ansible/results
-RUN chmod 755 -R /usr/app-services-ansible
+RUN chmod 777 -R /usr/app-services-ansible
 
 ENV PATH ~/bin:$PATH
 
-WORKDIR /usr/app-services-ansible/tests
+USER build
+
+WORKDIR /usr/app-services-ansible
