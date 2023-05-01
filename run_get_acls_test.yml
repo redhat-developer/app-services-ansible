@@ -1,0 +1,20 @@
+---
+- name: RHOAS test
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+  - name: Get Kafka ACLs
+    rhoas.rhoas.get_kafka_acls:
+      # kafka_id: "{{ kafka_req_resp_obj['kafka_id'] }}"
+      ## to hardcode the kafka_id uncomment and use the following line
+      # kafka_id: "KAFKA_ID"
+      # principal: "jeeves"
+
+      kafka_id: ""
+      # openshift_offline_token: "OFFLINE_TOKEN"
+    register:
+      kafka_acls_resp_obj
+  - name: Debug Kafka ACLs
+    debug:
+      msg: "{{ kafka_acls_resp_obj }}"
